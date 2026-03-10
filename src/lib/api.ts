@@ -1,0 +1,224 @@
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
+const getToken = (): string | null => localStorage.getItem("astar_token");
+
+export interface ApiUser {
+  id: string;
+  email: string;
+  name: string;
+  role: "admin" | "client";
+  isActive: boolean;
+  subscriptionStatus: "active" | "inactive" | "cancelled";
+}
+
+export async function apiLogin(email: string, password: string): Promise<{ user: ApiUser; access_token: string }> {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message ?? "Invalid credentials");
+  }
+  return res.json();
+}
+
+export async function apiRegister(data: {
+  name: string;
+  email: string;
+  password: string;
+  birthDate: string;
+  birthPlace: string;
+  birthTime: string;
+}): Promise<{ user: ApiUser; access_token: string }> {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.message ?? "Registration failed");
+  return body;
+}
+
+export async function apiMe(): Promise<ApiUser | null> {
+  const token = getToken();
+  if (!token) return null;
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export function setToken(token: string): void {
+  localStorage.setItem("astar_token", token);
+}
+
+export function clearToken(): void {
+  localStorage.removeItem("astar_token");
+}
+
+// ——— Admin API (requires admin role) ———
+
+function authHeaders(): HeadersInit {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+  subscriptionStatus: string;
+  createdAt: string;
+}
+
+export interface AdminUsersResponse {
+  data: AdminUserListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function adminGetUsers(params: { page?: number; limit?: number; search?: string }): Promise<AdminUsersResponse> {
+  const sp = new URLSearchParams();
+  if (params.page != null) sp.set("page", String(params.page));
+  if (params.limit != null) sp.set("limit", String(params.limit));
+  if (params.search) sp.set("search", params.search);
+  const res = await fetch(`${API_BASE}/admin/users?${sp}`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Failed to load users");
+  return res.json();
+}
+
+export interface AdminUserDetail {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+  subscriptionStatus: string;
+  birthDate: string | null;
+  birthPlace: string | null;
+  birthTime: string | null;
+  createdAt: string;
+}
+
+export async function adminGetUser(id: string): Promise<AdminUserDetail> {
+  const res = await fetch(`${API_BASE}/admin/users/${id}`, { headers: authHeaders() });
+  if (!res.ok) {
+    if (res.status === 404) throw new Error("User not found");
+    throw new Error("Failed to load user");
+  }
+  return res.json();
+}
+
+export async function adminUpdateUser(
+  id: string,
+  body: { isActive?: boolean; subscriptionStatus?: "active" | "inactive" | "cancelled" }
+): Promise<ApiUser> {
+  const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error("Failed to update user");
+  return res.json();
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  activeSubscriptions: number;
+  inactiveSubscriptions: number;
+  cancelledSubscriptions: number;
+}
+
+export async function adminGetStats(): Promise<AdminStats> {
+  const res = await fetch(`${API_BASE}/admin/stats`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Failed to load stats");
+  return res.json();
+}
+
+// ——— Portal API (client, requires auth) ———
+
+export interface PortalProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+  subscriptionStatus: string;
+  birthDate: string | null;
+  birthPlace: string | null;
+  birthTime: string | null;
+  createdAt: string;
+}
+
+export interface PortalReport {
+  id: string;
+  type: string;
+  title: string;
+  content: string | null;
+  createdAt: string;
+}
+
+export interface PortalMessage {
+  id: string;
+  type: string;
+  content: string;
+  monthLabel: string | null;
+  createdAt: string;
+}
+
+export interface PortalNotification {
+  id: string;
+  title: string;
+  body: string | null;
+  category: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export async function portalGetProfile(): Promise<PortalProfile | null> {
+  const res = await fetch(`${API_BASE}/portal/me`, { headers: authHeaders() });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function portalGetReports(): Promise<PortalReport[]> {
+  const res = await fetch(`${API_BASE}/portal/reports`, { headers: authHeaders() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function portalGetReportByType(type: string): Promise<PortalReport | null> {
+  const res = await fetch(`${API_BASE}/portal/reports/${encodeURIComponent(type)}`, { headers: authHeaders() });
+  if (!res.ok || res.status === 404) return null;
+  return res.json();
+}
+
+export async function portalGetMessages(): Promise<PortalMessage[]> {
+  const res = await fetch(`${API_BASE}/portal/messages`, { headers: authHeaders() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function portalGetNotifications(): Promise<PortalNotification[]> {
+  const res = await fetch(`${API_BASE}/portal/notifications`, { headers: authHeaders() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function portalMarkNotificationRead(id: string): Promise<void> {
+  await fetch(`${API_BASE}/portal/notifications/${encodeURIComponent(id)}/read`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
