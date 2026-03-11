@@ -1,8 +1,9 @@
 import { Outlet, Navigate, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LayoutDashboard, Users, HelpCircle, Mail, FileText, BookOpen, Database, CreditCard, LogOut, Menu, Bell, Settings, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ThemeToggle from "@/components/landing/ThemeToggle";
+import { adminGetNotifications, type AdminNotificationItem } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -10,6 +11,7 @@ import { useTheme } from "next-themes";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Panel", end: true },
+  { to: "/admin/notifications", icon: Bell, label: "Notificaciones" },
   { to: "/admin/users", icon: Users, label: "Usuarios" },
   { to: "/admin/questions", icon: HelpCircle, label: "Preguntas" },
   { to: "/admin/monthly-messages", icon: Mail, label: "Mensajes Mensuales" },
@@ -37,8 +39,13 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotificationItem[]>([]);
   const { resolvedTheme } = useTheme();
   const logoSrc = resolvedTheme === "light" ? "/3SIN%20FONDO/logosolofinal.png" : "/3SIN%20FONDO/logoblanco.png";
+
+  useEffect(() => {
+    adminGetNotifications().then(setNotifications);
+  }, []);
 
   if (authLoading) {
     return <LoadingSpinner />;
@@ -56,41 +63,47 @@ const AdminLayout = () => {
   const currentPath = location.pathname;
   const meta = pageMeta[currentPath] || { title: "Admin", subtitle: "Panel de administración" };
 
-  const notifications: { id: number; title: string; description: string; unread: boolean }[] = [];
+  const unreadCount = notifications.filter((n) => n.unread).length;
   const NotificationPopover = () => (
     <Popover>
       <PopoverTrigger asChild>
         <button className="relative p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
           <Bell className="w-5 h-5" />
-          {notifications.filter((n) => n.unread).length > 0 && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
+          {unreadCount > 0 && (
+            <span className="absolute top-2 right-2 min-w-[8px] h-2 px-1 flex items-center justify-center bg-destructive text-[10px] text-destructive-foreground font-medium rounded-full">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
           )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 bg-card/95 backdrop-blur-xl border-border/50">
         <div className="p-4 border-b border-border/30">
           <h3 className="font-semibold text-foreground text-sm">Notificaciones</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{notifications.filter((n) => n.unread).length} sin leer</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {unreadCount > 0 ? `${unreadCount} nueva${unreadCount !== 1 ? "s" : ""}` : "Sin notificaciones nuevas"}
+          </p>
         </div>
         <div className="max-h-72 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="px-4 py-4">
-              <EmptyState icon={Bell} message="No hay notificaciones." className="py-6" />
+              <EmptyState icon={Bell} message="No hay notificaciones nuevas." className="py-6" />
             </div>
           ) : (
             notifications.map((n) => (
-              <div
+              <button
                 key={n.id}
-                className={`px-4 py-3 border-b border-border/20 hover:bg-accent/30 transition-colors cursor-pointer ${n.unread ? "bg-primary/5" : ""}`}
+                type="button"
+                onClick={() => navigate(n.link)}
+                className={`w-full text-left px-4 py-3 border-b border-border/20 hover:bg-accent/30 transition-colors cursor-pointer ${n.unread ? "bg-primary/5" : ""}`}
               >
                 <div className="flex items-start gap-3">
                   {n.unread && <span className="mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0" />}
                   <div className={n.unread ? "" : "ml-5"}>
                     <p className="text-sm font-medium text-foreground">{n.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{n.description}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.description}</p>
                   </div>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>

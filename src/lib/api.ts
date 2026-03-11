@@ -60,8 +60,6 @@ export function clearToken(): void {
   localStorage.removeItem("astar_token");
 }
 
-// ——— Admin API (requires admin role) ———
-
 function authHeaders(): HeadersInit {
   const token = getToken();
   return {
@@ -69,6 +67,29 @@ function authHeaders(): HeadersInit {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
+
+export async function apiUpdateProfile(data: { name?: string; email?: string }): Promise<ApiUser> {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const err = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((err as { message?: string }).message ?? "No se pudo actualizar el perfil");
+  return res.json();
+}
+
+export async function apiChangePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/auth/me/password`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const err = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((err as { message?: string }).message ?? "No se pudo cambiar la contraseña");
+}
+
+// ——— Admin API (requires admin role) ———
 
 export interface AdminUserListItem {
   id: string;
@@ -162,6 +183,23 @@ export async function adminGetOrders(): Promise<AdminOrderItem[]> {
   return res.json();
 }
 
+export interface AdminNotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  date: string;
+  link: string;
+  unread: boolean;
+}
+
+export async function adminGetNotifications(): Promise<AdminNotificationItem[]> {
+  const res = await fetch(`${API_BASE}/admin/notifications`, { headers: authHeaders() });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.notifications ?? [];
+}
+
 export interface AdminBlogPostItem {
   id: string;
   title: string;
@@ -176,6 +214,43 @@ export async function adminGetBlogPosts(): Promise<AdminBlogPostItem[]> {
   return res.json();
 }
 
+export async function adminGetBlogPost(id: string): Promise<AdminBlogPostItem | null> {
+  const res = await fetch(`${API_BASE}/admin/blog/${encodeURIComponent(id)}`, { headers: authHeaders() });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function adminCreateBlogPost(payload: { title: string; content: string; status?: "draft" | "published" }): Promise<AdminBlogPostItem | null> {
+  const res = await fetch(`${API_BASE}/admin/blog`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function adminUpdateBlogPost(
+  id: string,
+  payload: { title?: string; content?: string; status?: "draft" | "published" }
+): Promise<AdminBlogPostItem | null> {
+  const res = await fetch(`${API_BASE}/admin/blog/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function adminDeleteBlogPost(id: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/admin/blog/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.ok;
+}
+
 export interface AdminKnowledgeCategory {
   id: string;
   title: string;
@@ -186,6 +261,50 @@ export async function adminGetKnowledgeBase(): Promise<AdminKnowledgeCategory[]>
   const res = await fetch(`${API_BASE}/admin/knowledge-base`, { headers: authHeaders() });
   if (!res.ok) return [];
   return res.json();
+}
+
+export async function adminCreateKnowledgeCategory(title: string): Promise<AdminKnowledgeCategory | null> {
+  const res = await fetch(`${API_BASE}/admin/knowledge-base/categories`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ title: title.trim() }),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function adminCreateKnowledgeEntry(
+  categoryId: string,
+  content: string
+): Promise<{ id: string; content: string } | null> {
+  const res = await fetch(`${API_BASE}/admin/knowledge-base/categories/${encodeURIComponent(categoryId)}/entries`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ content: content.trim() }),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function adminUpdateKnowledgeEntry(
+  entryId: string,
+  content: string
+): Promise<{ id: string; content: string } | null> {
+  const res = await fetch(`${API_BASE}/admin/knowledge-base/entries/${encodeURIComponent(entryId)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ content: content.trim() }),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function adminDeleteKnowledgeEntry(entryId: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/admin/knowledge-base/entries/${encodeURIComponent(entryId)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return res.ok;
 }
 
 export interface AdminQuestionItem {
@@ -234,6 +353,19 @@ export interface AdminReportItem {
 export async function adminGetReports(): Promise<AdminReportItem[]> {
   const res = await fetch(`${API_BASE}/admin/reports`, { headers: authHeaders() });
   if (!res.ok) return [];
+  return res.json();
+}
+
+export async function adminUpdateReport(
+  id: string,
+  payload: { content?: string; title?: string }
+): Promise<AdminReportItem | null> {
+  const res = await fetch(`${API_BASE}/admin/reports/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return null;
   return res.json();
 }
 

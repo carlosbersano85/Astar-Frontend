@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, Mail, Shield, Camera, Pencil, Check, X, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Shield, Camera, Pencil, Check, X, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const AdminProfile = () => {
-  const { user } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -17,13 +17,22 @@ const AdminProfile = () => {
   const [email, setEmail] = useState(user?.email || "");
 
   // Password reset state
+  const [savingProfile, setSavingProfile] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+    }
+  }, [user?.id, user?.name, user?.email]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,9 +43,16 @@ const AdminProfile = () => {
     }
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    toast.success("Perfil actualizado correctamente");
+  const handleSave = async () => {
+    setSavingProfile(true);
+    const result = await updateProfile({ name: name.trim(), email: email.trim() });
+    setSavingProfile(false);
+    if (result.ok) {
+      setIsEditing(false);
+      toast.success("Perfil actualizado correctamente");
+    } else {
+      toast.error(result.error);
+    }
   };
 
   const handleCancel = () => {
@@ -45,7 +61,7 @@ const AdminProfile = () => {
     setIsEditing(false);
   };
 
-  const handlePasswordReset = () => {
+  const handlePasswordReset = async () => {
     if (!currentPassword) {
       toast.error("Ingresa tu contraseña actual");
       return;
@@ -58,11 +74,18 @@ const AdminProfile = () => {
       toast.error("Las contraseñas no coinciden");
       return;
     }
-    setIsResettingPassword(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    toast.success("Contraseña actualizada correctamente");
+    setSavingPassword(true);
+    const result = await changePassword(currentPassword, newPassword);
+    setSavingPassword(false);
+    if (result.ok) {
+      setIsResettingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Contraseña actualizada correctamente");
+    } else {
+      toast.error(result.error);
+    }
   };
 
   const handleCancelPasswordReset = () => {
@@ -79,7 +102,7 @@ const AdminProfile = () => {
         <div className="relative group">
           <Avatar className="w-20 h-20 border-2 border-primary/20">
             <AvatarImage src={avatarUrl || undefined} alt={name} />
-            <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
+            <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold font-sans tabular-nums">
               {name?.charAt(0) || "A"}
             </AvatarFallback>
           </Avatar>
@@ -98,7 +121,7 @@ const AdminProfile = () => {
           />
         </div>
         <div className="flex-1">
-          <h2 className="text-xl font-serif font-semibold text-foreground">{name}</h2>
+          <h2 className="text-xl font-sans font-semibold text-foreground tabular-nums">{name}</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Administrador de la plataforma</p>
         </div>
         {!isEditing && (
@@ -115,22 +138,31 @@ const AdminProfile = () => {
           <div className="p-6 space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-muted-foreground">Nombre</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="font-sans tabular-nums" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-muted-foreground">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="font-sans tabular-nums" />
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground">Rol</Label>
-              <Input value="Administrador" disabled className="opacity-60" />
+              <Input value="Administrador" disabled className="opacity-60 font-sans tabular-nums" />
             </div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={handleSave} className="gap-1.5">
-                <Check className="w-4 h-4" />
-                Guardar
+              <Button onClick={handleSave} disabled={savingProfile} className="gap-1.5">
+                {savingProfile ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Guardar
+                  </>
+                )}
               </Button>
-              <Button variant="outline" onClick={handleCancel} className="gap-1.5">
+              <Button variant="outline" onClick={handleCancel} disabled={savingProfile} className="gap-1.5">
                 <X className="w-4 h-4" />
                 Cancelar
               </Button>
@@ -142,14 +174,14 @@ const AdminProfile = () => {
               <User className="w-4 h-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Nombre</p>
-                <p className="text-sm text-foreground font-medium">{name}</p>
+                <p className="text-sm text-foreground font-medium font-sans tabular-nums">{name}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 px-6 py-4">
               <Mail className="w-4 h-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm text-foreground font-medium">{email}</p>
+                <p className="text-sm text-foreground font-medium font-sans tabular-nums">{email}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 px-6 py-4">
@@ -241,11 +273,20 @@ const AdminProfile = () => {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={handlePasswordReset} className="gap-1.5">
-                <Check className="w-4 h-4" />
-                Actualizar
+              <Button onClick={handlePasswordReset} disabled={savingPassword} className="gap-1.5">
+                {savingPassword ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Actualizando…
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Actualizar
+                  </>
+                )}
               </Button>
-              <Button variant="outline" onClick={handleCancelPasswordReset} className="gap-1.5">
+              <Button variant="outline" onClick={handleCancelPasswordReset} disabled={savingPassword} className="gap-1.5">
                 <X className="w-4 h-4" />
                 Cancelar
               </Button>

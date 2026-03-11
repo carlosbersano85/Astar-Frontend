@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import { RefreshCw, Edit, Eye, X, Search, ChevronLeft, ChevronRight, BookOpen, Loader2 } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
-import { adminGetReports, type AdminReportItem } from "@/lib/api";
+import { adminGetReports, adminUpdateReport, type AdminReportItem } from "@/lib/api";
 import { getPaginationItems } from "@/lib/pagination";
 
 type ReportItem = { id: string; user: string; type: string; status: string; date: string; content: string };
@@ -25,6 +25,8 @@ const AdminReports = () => {
   const [editContent, setEditContent] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     adminGetReports().then((data) => {
@@ -69,6 +71,32 @@ const AdminReports = () => {
   const closeModal = () => {
     setModal(null);
     setSelected(null);
+    setError(null);
+  };
+
+  const handleSaveReport = async () => {
+    if (!selected) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await adminUpdateReport(selected.id, { content: editContent });
+      if (updated) {
+        setReports((prev) =>
+          prev.map((r) =>
+            r.id === selected.id
+              ? { ...r, content: updated.content ?? "", date: formatDate(updated.date) }
+              : r
+          )
+        );
+        closeModal();
+      } else {
+        setError("No se pudo guardar el reporte.");
+      }
+    } catch {
+      setError("Error al guardar. Intenta de nuevo.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -135,9 +163,17 @@ const AdminReports = () => {
                       className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 text-sm resize-none"
                     />
                   </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
                   <div className="flex gap-3">
-                    <button className="px-5 py-2.5 rounded-xl shimmer-gold text-primary-foreground text-sm font-medium glow-gold">Guardar</button>
-                    <button onClick={closeModal} className="px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      onClick={handleSaveReport}
+                      disabled={saving}
+                      className="px-5 py-2.5 rounded-xl shimmer-gold text-primary-foreground text-sm font-medium glow-gold disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Guardar
+                    </button>
+                    <button onClick={closeModal} disabled={saving} className="px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
                       Cancelar
                     </button>
                   </div>

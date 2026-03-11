@@ -1,11 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Plus, Edit, Trash2, Eye, X, Search, ChevronLeft, ChevronRight, FileText, Loader2 } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
-import { adminGetBlogPosts } from "@/lib/api";
+import {
+  adminGetBlogPosts,
+  adminCreateBlogPost,
+  adminUpdateBlogPost,
+  adminDeleteBlogPost,
+  type AdminBlogPostItem,
+} from "@/lib/api";
 import { getPaginationItems } from "@/lib/pagination";
-
-type PostItem = { id: string; title: string; status: string; date: string; content: string };
 
 type ModalType = "new" | "view" | "edit" | "delete" | null;
 
@@ -19,36 +23,42 @@ function formatDate(iso: string) {
   }
 }
 
+function statusLabel(status: string) {
+  return status === "published" ? "Publicado" : status === "draft" ? "Borrador" : status;
+}
+
 const AdminBlog = () => {
-  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [posts, setPosts] = useState<AdminBlogPostItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalType>(null);
-  const [selectedPost, setSelectedPost] = useState<PostItem | null>(null);
+  const [selectedPost, setSelectedPost] = useState<AdminBlogPostItem | null>(null);
   const [formTitle, setFormTitle] = useState("");
   const [formContent, setFormContent] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    adminGetBlogPosts().then((data) => {
-      setPosts(
-        data.map((p) => ({
-          id: p.id,
-          title: p.title,
-          status: p.status === "published" ? "Publicado" : p.status === "draft" ? "Borrador" : p.status,
-          date: formatDate(p.date),
-          content: p.content,
-        }))
-      );
-      setLoading(false);
-    });
+  const fetchPosts = useCallback(() => {
+    setLoading(true);
+    adminGetBlogPosts()
+      .then(setPosts)
+      .finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(() =>
-    posts.filter((p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.status.toLowerCase().includes(search.toLowerCase())
-    ), [search, posts]);
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const filtered = useMemo(
+    () =>
+      posts.filter(
+        (p) =>
+          p.title.toLowerCase().includes(search.toLowerCase()) ||
+          statusLabel(p.status).toLowerCase().includes(search.toLowerCase())
+      ),
+    [search, posts]
+  );
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -62,8 +72,9 @@ const AdminBlog = () => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  const openModal = (type: ModalType, post?: PostItem) => {
+  const openModal = (type: ModalType, post?: AdminBlogPostItem) => {
     setSelectedPost(post || null);
+    setSubmitError(null);
     if (type === "edit" && post) {
       setFormTitle(post.title);
       setFormContent(post.content);
@@ -77,13 +88,55 @@ const AdminBlog = () => {
   const closeModal = () => {
     setModal(null);
     setSelectedPost(null);
+    setSubmitError(null);
   };
 
-  const handleDelete = () => {
-    if (selectedPost) {
-      setPosts((prev) => prev.filter((p) => p.id !== selectedPost.id));
+  const handleSave = async (status: "draft" | "published") => {
+    const title = formTitle.trim();
+    if (!title) {
+      setSubmitError("El título es obligatorio.");
+      return;
     }
-    closeModal();
+    setSubmitLoading(true);
+    setSubmitError(null);
+    try {
+      if (modal === "new") {
+        const created = await adminCreateBlogPost({ title, content: formContent, status });
+        if (created) {
+          fetchPosts();
+          closeModal();
+        } else {
+          setSubmitError("No se pudo crear el artículo.");
+        }
+      } else if (modal === "edit" && selectedPost) {
+        const updated = await adminUpdateBlogPost(selectedPost.id, { title, content: formContent, status });
+        if (updated) {
+          fetchPosts();
+          closeModal();
+        } else {
+          setSubmitError("No se pudo actualizar el artículo.");
+        }
+      }
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedPost) return;
+    setSubmitLoading(true);
+    setSubmitError(null);
+    try {
+      const ok = await adminDeleteBlogPost(selectedPost.id);
+      if (ok) {
+        fetchPosts();
+        closeModal();
+      } else {
+        setSubmitError("No se pudo eliminar el artículo.");
+      }
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   return (
@@ -117,10 +170,10 @@ const AdminBlog = () => {
                 <div className="space-y-4">
                   <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Título</p><p className="text-foreground font-medium text-lg">{selectedPost.title}</p></div>
                   <div className="flex gap-4">
-                    <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Estado</p><span className={`text-xs px-2 py-1 rounded-full ${selectedPost.status === "Publicado" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{selectedPost.status}</span></div>
-                    <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Fecha</p><p className="text-sm text-muted-foreground">{selectedPost.date}</p></div>
+                    <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Estado</p><span className={`text-xs px-2 py-1 rounded-full ${selectedPost.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{statusLabel(selectedPost.status)}</span></div>
+                    <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Fecha</p><p className="text-sm text-muted-foreground">{formatDate(selectedPost.date)}</p></div>
                   </div>
-                  <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Contenido</p><p className="text-muted-foreground leading-relaxed text-sm">{selectedPost.content}</p></div>
+                  <div><p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Contenido</p><p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-wrap">{selectedPost.content}</p></div>
                   <div className="pt-2"><button onClick={closeModal} className="px-5 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">Cerrar</button></div>
                 </div>
               )}
@@ -128,19 +181,29 @@ const AdminBlog = () => {
                 <div className="space-y-4">
                   <div><label className="text-xs tracking-widest uppercase text-muted-foreground mb-2 block">Título</label><input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Título del artículo" className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 text-sm" /></div>
                   <div><label className="text-xs tracking-widest uppercase text-muted-foreground mb-2 block">Contenido</label><textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={10} placeholder="Escribe el contenido del artículo..." className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 text-sm resize-none" /></div>
+                  {submitError && <p className="text-sm text-destructive">{submitError}</p>}
                   <div className="flex gap-3 pt-2">
-                    <button className="px-5 py-2.5 rounded-xl shimmer-gold text-primary-foreground text-sm font-medium glow-gold">Publicar</button>
-                    <button className="px-5 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">Guardar Borrador</button>
-                    <button onClick={closeModal} className="px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
+                    <button onClick={() => handleSave("published")} disabled={submitLoading} className="px-5 py-2.5 rounded-xl shimmer-gold text-primary-foreground text-sm font-medium glow-gold disabled:opacity-50 flex items-center gap-2">
+                      {submitLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Publicar
+                    </button>
+                    <button onClick={() => handleSave("draft")} disabled={submitLoading} className="px-5 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors disabled:opacity-50">
+                      Guardar Borrador
+                    </button>
+                    <button onClick={closeModal} disabled={submitLoading} className="px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
                   </div>
                 </div>
               )}
               {modal === "delete" && selectedPost && (
                 <div className="space-y-6">
                   <p className="text-muted-foreground">¿Estás seguro de que deseas eliminar el artículo <span className="text-foreground font-medium">"{selectedPost.title}"</span>? Esta acción no se puede deshacer.</p>
+                  {submitError && <p className="text-sm text-destructive">{submitError}</p>}
                   <div className="flex gap-3">
-                    <button onClick={handleDelete} className="px-5 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors">Eliminar</button>
-                    <button onClick={closeModal} className="px-5 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">Cancelar</button>
+                    <button onClick={handleDelete} disabled={submitLoading} className="px-5 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors disabled:opacity-50 flex items-center gap-2">
+                      {submitLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Eliminar
+                    </button>
+                    <button onClick={closeModal} disabled={submitLoading} className="px-5 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">Cancelar</button>
                   </div>
                 </div>
               )}
@@ -161,8 +224,8 @@ const AdminBlog = () => {
             {paginated.map((p) => (
               <tr key={p.id} className="border-b border-border/20 hover:bg-accent/30 transition-colors">
                 <td className="p-4 text-foreground">{p.title}</td>
-                <td className="p-4"><span className={`text-xs px-2 py-1 rounded-full ${p.status === "Publicado" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{p.status}</span></td>
-                <td className="p-4 text-muted-foreground">{p.date}</td>
+                <td className="p-4"><span className={`text-xs px-2 py-1 rounded-full ${p.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{statusLabel(p.status)}</span></td>
+                <td className="p-4 text-muted-foreground">{formatDate(p.date)}</td>
                 <td className="p-4 flex items-center gap-2">
                   <button onClick={() => openModal("view", p)} className="p-1.5 hover:bg-accent/50 rounded-lg transition-colors"><Eye className="w-4 h-4 text-muted-foreground" /></button>
                   <button onClick={() => openModal("edit", p)} className="p-1.5 hover:bg-accent/50 rounded-lg transition-colors"><Edit className="w-4 h-4 text-muted-foreground" /></button>
