@@ -1,9 +1,10 @@
 import { Outlet, Navigate, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminNotifications } from "@/contexts/AdminNotificationsContext";
+import { AdminNotificationsProvider } from "@/contexts/AdminNotificationsContext";
 import { LayoutDashboard, Users, HelpCircle, Mail, FileText, BookOpen, Database, CreditCard, LogOut, Menu, Bell, Settings, User } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ThemeToggle from "@/components/landing/ThemeToggle";
-import { adminGetNotifications, type AdminNotificationItem } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -11,7 +12,6 @@ import { useTheme } from "next-themes";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Panel", end: true },
-  { to: "/admin/notifications", icon: Bell, label: "Notificaciones" },
   { to: "/admin/users", icon: Users, label: "Usuarios" },
   { to: "/admin/questions", icon: HelpCircle, label: "Preguntas" },
   { to: "/admin/monthly-messages", icon: Mail, label: "Mensajes Mensuales" },
@@ -34,26 +34,14 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/admin/profile": { title: "Mi Perfil", subtitle: "Información de tu cuenta" },
 };
 
-const AdminLayout = () => {
-  const { user, isAuthenticated, isAdmin, authLoading, logout } = useAuth();
+const AdminLayoutContent = () => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AdminNotificationItem[]>([]);
+  const { notifications } = useAdminNotifications();
   const { resolvedTheme } = useTheme();
   const logoSrc = resolvedTheme === "light" ? "/3SIN%20FONDO/logosolofinal.png" : "/3SIN%20FONDO/logoblanco.png";
-
-  useEffect(() => {
-    adminGetNotifications().then(setNotifications);
-  }, []);
-
-  if (authLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!isAuthenticated || !isAdmin) {
-    return <Navigate to="/admin/login" replace />;
-  }
 
   const handleLogout = async () => {
     await logout();
@@ -67,10 +55,10 @@ const AdminLayout = () => {
   const NotificationPopover = () => (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
+        <button className="relative p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 min-w-[8px] h-2 px-1 flex items-center justify-center bg-destructive text-[10px] text-destructive-foreground font-medium rounded-full">
+            <span className="absolute top-0 right-0 min-w-[20px] min-h-[20px] h-2 px-1 flex items-center justify-center bg-destructive text-[10px] text-destructive-foreground font-medium rounded-full">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -227,6 +215,24 @@ const AdminLayout = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const AdminLayout = () => {
+  const { isAuthenticated, isAdmin, authLoading } = useAuth();
+
+  if (authLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return (
+    <AdminNotificationsProvider>
+      <AdminLayoutContent />
+    </AdminNotificationsProvider>
   );
 };
 

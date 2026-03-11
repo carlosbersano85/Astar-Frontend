@@ -1,8 +1,9 @@
-import { Bell, HelpCircle, CreditCard, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { Bell, HelpCircle, CreditCard, Search, ChevronLeft, ChevronRight, Loader2, Check } from "lucide-react";
+import { useState, useMemo } from "react";
 import EmptyState from "@/components/EmptyState";
 import { getPaginationItems } from "@/lib/pagination";
-import { adminGetNotifications, type AdminNotificationItem } from "@/lib/api";
+import { useAdminNotifications } from "@/contexts/AdminNotificationsContext";
+import { adminMarkNotificationRead, adminMarkAllNotificationsRead } from "@/lib/api";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -30,17 +31,31 @@ function getIconAndCategory(type: string): { icon: typeof HelpCircle; category: 
 }
 
 const AdminNotifications = () => {
-  const [notifications, setNotifications] = useState<AdminNotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notifications, loading, refetch } = useAdminNotifications();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
 
-  useEffect(() => {
-    adminGetNotifications().then((data) => {
-      setNotifications(data);
-      setLoading(false);
-    });
-  }, []);
+  const markAsRead = async (id: string) => {
+    setMarkingId(id);
+    try {
+      await adminMarkNotificationRead(id);
+      await refetch();
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    setMarkingAll(true);
+    try {
+      await adminMarkAllNotificationsRead();
+      await refetch();
+    } finally {
+      setMarkingAll(false);
+    }
+  };
 
   const filtered = useMemo(
     () =>
@@ -69,18 +84,21 @@ const AdminNotifications = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl md:text-3xl tracking-wide text-gradient-gold font-semibold">Notificaciones</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {unreadCount > 0 ? `${unreadCount} notificación${unreadCount !== 1 ? "es" : ""} nueva${unreadCount !== 1 ? "s" : ""}` : "Sin notificaciones nuevas"}
-          </p>
-        </div>
-      </div>
 
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Buscar notificaciones..." className="w-full pl-11 pr-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 text-sm" />
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Buscar notificaciones..." className="w-full pl-11 pr-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 text-sm" />
+        </div>
+        <button
+          type="button"
+          onClick={markAllAsRead}
+          disabled={markingAll || unreadCount === 0}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {markingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          Marcar todas como leídas
+        </button>
       </div>
 
       {loading ? (
@@ -88,37 +106,48 @@ const AdminNotifications = () => {
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
       ) : (
-      <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden divide-y divide-border/20">
-        {paginated.map((notif) => {
-          const { icon: Icon, category } = getIconAndCategory(notif.type);
-          return (
-            <div
-              key={notif.id}
-              className={`flex items-start gap-4 px-5 py-4 hover:bg-accent/20 transition-colors ${notif.unread ? "bg-primary/5" : ""}`}
-            >
-              <div className={`mt-0.5 p-2 rounded-xl flex-shrink-0 ${notif.unread ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
-                <Icon className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className={`text-sm font-medium ${notif.unread ? "text-foreground" : "text-muted-foreground"}`}>{notif.title}</p>
-                  {notif.unread && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+        <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden divide-y divide-border/20">
+          {paginated.map((notif) => {
+            const { icon: Icon, category } = getIconAndCategory(notif.type);
+            const unread = notif.unread;
+            const isMarking = markingId === notif.id;
+            return (
+              <div
+                key={notif.id}
+                className={`flex items-start gap-4 px-5 py-4 hover:bg-accent/20 transition-colors ${unread ? "bg-primary/5" : ""}`}
+              >
+                <div className={`mt-0.5 p-2 rounded-xl flex-shrink-0 ${unread ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  <Icon className="w-4 h-4" />
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{notif.description}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-[10px] text-muted-foreground/60">{formatNotificationTime(notif.date)}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground">{category}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className={`text-sm font-medium ${unread ? "text-foreground" : "text-muted-foreground"}`}>{notif.title}</p>
+                    {unread && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{notif.description}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-[10px] text-muted-foreground/60">{formatNotificationTime(notif.date)}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground">{category}</span>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => markAsRead(notif.id)}
+                  disabled={isMarking}
+                  className={`mt-0.5 p-2 rounded-xl flex-shrink-0 transition-colors ${unread ? "text-muted-foreground hover:text-primary hover:bg-primary/10" : "text-primary/60 bg-primary/5"} disabled:opacity-50`}
+                  title={unread ? "Marcar como leída" : "Leída"}
+                >
+                  {isMarking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                </button>
               </div>
+            );
+          })}
+          {paginated.length === 0 && (
+            <div className="p-6">
+              <EmptyState icon={Bell} message="No hay notificaciones nuevas." />
             </div>
-          );
-        })}
-        {paginated.length === 0 && (
-          <div className="p-6">
-            <EmptyState icon={Bell} message="No hay notificaciones nuevas." />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
       {totalPages > 1 && (

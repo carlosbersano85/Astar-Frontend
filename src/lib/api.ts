@@ -200,6 +200,22 @@ export async function adminGetNotifications(): Promise<AdminNotificationItem[]> 
   return data.notifications ?? [];
 }
 
+export async function adminMarkNotificationRead(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/notifications/${encodeURIComponent(id)}/read`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo marcar como leída");
+}
+
+export async function adminMarkAllNotificationsRead(): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/notifications/read-all`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudieron marcar todas como leídas");
+}
+
 export interface AdminBlogPostItem {
   id: string;
   title: string;

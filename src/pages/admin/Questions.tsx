@@ -122,7 +122,7 @@ const AdminQuestions = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex gap-3 mb-6 flex-wrap">
+      <div className="flex gap-3 mb-6 flex-row">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -135,23 +135,25 @@ const AdminQuestions = () => {
             className="w-full pl-11 pr-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 text-sm"
           />
         </div>
-        <Select
-          value={statusFilter === "" ? "all" : statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v === "all" ? "" : v);
-            setCurrentPage(1);
-          }}
-        >
-          <SelectTrigger className="min-w-[180px] h-[46px] rounded-xl bg-background/50 border-border/50 focus:ring-primary/20">
-            <SelectValue placeholder="Todos los estados" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="new">Nueva</SelectItem>
-            <SelectItem value="waiting">En espera</SelectItem>
-            <SelectItem value="answered">Respondida</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="relative min-w-[200px]">
+          <Select
+            value={statusFilter === "" ? "all" : statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v === "all" ? "" : v);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="min-w-[180px] h-[46px] rounded-xl bg-background/50 border-border/50 focus:ring-primary/20">
+              <SelectValue placeholder="Todos los estados" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="new">Nueva</SelectItem>
+              <SelectItem value="waiting">En espera</SelectItem>
+              <SelectItem value="answered">Respondida</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <motion.div
@@ -236,9 +238,8 @@ const AdminQuestions = () => {
                 <button
                   key={item}
                   onClick={() => goToPage(item)}
-                  className={`w-8 h-8 rounded-lg text-sm transition-colors ${
-                    item === currentPage ? "bg-primary/10 text-primary border border-primary/20 font-medium" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  }`}
+                  className={`w-8 h-8 rounded-lg text-sm transition-colors ${item === currentPage ? "bg-primary/10 text-primary border border-primary/20 font-medium" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    }`}
                 >
                   {item}
                 </button>
