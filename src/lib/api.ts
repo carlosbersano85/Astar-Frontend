@@ -425,6 +425,14 @@ export interface PortalProfile {
   createdAt: string;
 }
 
+export interface PortalOrder {
+  id: string;
+  type: string;
+  amount: string;
+  method: string;
+  createdAt: string;
+}
+
 export interface PortalReport {
   id: string;
   type: string;
@@ -433,10 +441,18 @@ export interface PortalReport {
   createdAt: string;
 }
 
+export async function portalGetMyOrders(): Promise<PortalOrder[]> {
+  const res = await fetch(`${API_BASE}/portal/orders`, { headers: authHeaders() });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
 export interface PortalMessage {
   id: string;
   type: string;
   content: string;
+  questionText: string | null;
   monthLabel: string | null;
   createdAt: string;
 }
@@ -465,7 +481,13 @@ export async function portalGetReports(): Promise<PortalReport[]> {
 export async function portalGetReportByType(type: string): Promise<PortalReport | null> {
   const res = await fetch(`${API_BASE}/portal/reports/${encodeURIComponent(type)}`, { headers: authHeaders() });
   if (!res.ok || res.status === 404) return null;
-  return res.json();
+  const text = await res.text();
+  if (!text.trim()) return null;
+  try {
+    return JSON.parse(text) as PortalReport;
+  } catch {
+    return null;
+  }
 }
 
 export async function portalGetMessages(): Promise<PortalMessage[]> {
@@ -481,8 +503,43 @@ export async function portalGetNotifications(): Promise<PortalNotification[]> {
 }
 
 export async function portalMarkNotificationRead(id: string): Promise<void> {
-  await fetch(`${API_BASE}/portal/notifications/${encodeURIComponent(id)}/read`, {
+  const res = await fetch(`${API_BASE}/portal/notifications/${encodeURIComponent(id)}/read`, {
     method: "PATCH",
     headers: authHeaders(),
   });
+  if (!res.ok) throw new Error("No se pudo marcar como leída");
+}
+
+export async function portalMarkAllNotificationsRead(): Promise<void> {
+  const res = await fetch(`${API_BASE}/portal/notifications/read-all`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudieron marcar todas como leídas");
+}
+
+export interface PortalQuestionItem {
+  id: string;
+  question: string;
+  answer: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export async function portalGetMyQuestions(): Promise<PortalQuestionItem[]> {
+  const res = await fetch(`${API_BASE}/portal/questions`, { headers: authHeaders() });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function portalSubmitQuestion(question: string): Promise<{ id: string; question: string; status: string; createdAt: string }> {
+  const res = await fetch(`${API_BASE}/portal/questions`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ question: question.trim() }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { message?: string }).message ?? "No se pudo enviar la pregunta");
+  return data as { id: string; question: string; status: string; createdAt: string };
 }

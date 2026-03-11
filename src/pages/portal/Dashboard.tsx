@@ -51,14 +51,14 @@ const PortalDashboard = () => {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-2xl p-6 premium-shadow border border-primary/20">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -95,7 +95,7 @@ const PortalDashboard = () => {
         </div>
         {latestMessage ? (
           <>
-            <p className="font-serif text-lg text-foreground mb-3 line-clamp-2">
+            <p className="text-lg text-foreground mb-3 line-clamp-2">
               &quot;{latestMessage.content.slice(0, 120)}
               {latestMessage.content.length > 120 ? "…" : ""}&quot;
             </p>

@@ -1,12 +1,13 @@
 import { Outlet, Navigate, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePortalNotifications } from "@/contexts/PortalNotificationsContext";
+import { PortalNotificationsProvider } from "@/contexts/PortalNotificationsContext";
 import { LayoutDashboard, FileText, MessageCircle, HelpCircle, ShoppingCart, CreditCard, LogOut, Menu, Bell, User } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import ThemeToggle from "@/components/landing/ThemeToggle";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { portalGetNotifications } from "@/lib/api";
 
 const navItems = [
   { to: "/portal", icon: LayoutDashboard, label: "Panel", end: true },
@@ -43,28 +44,14 @@ function formatNotificationTime(iso: string): string {
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
-const PortalLayout = () => {
-  const { user, isAuthenticated, authLoading, logout } = useAuth();
+const PortalLayoutContent = () => {
+  const { user, logout } = useAuth();
   const { resolvedTheme } = useTheme();
   const logoSrc = resolvedTheme === "light" ? "/3SIN%20FONDO/logosolofinal.png" : "/3SIN%20FONDO/logoblanco.png";
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notifications, setNotifications] = useState<{ id: string; title: string; body: string | null; read: boolean; createdAt: string }[]>([]);
-
-  useEffect(() => {
-    if (isAuthenticated && user?.role !== "admin") {
-      portalGetNotifications().then(setNotifications);
-    }
-  }, [isAuthenticated, user?.role]);
-
-  if (authLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!isAuthenticated || user?.role === "admin") {
-    return <Navigate to="/login" replace />;
-  }
+  const { notifications } = usePortalNotifications();
 
   const handleLogout = async () => {
     await logout();
@@ -79,9 +66,13 @@ const PortalLayout = () => {
   const NotificationPopover = () => (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
+        <button className="relative p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
           <Bell className="w-5 h-5" />
-          {unreadCount > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />}
+          {unreadCount > 0 && (
+            <span className="absolute top-0 right-0 min-w-[20px] min-h-[20px] h-2 px-1 flex items-center justify-center bg-destructive text-[10px] text-destructive-foreground font-medium rounded-full">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} className="w-80 p-0 bg-card/95 backdrop-blur-xl border-border/50 rounded-xl overflow-hidden">
@@ -226,6 +217,24 @@ const PortalLayout = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const PortalLayout = () => {
+  const { user, isAuthenticated, authLoading } = useAuth();
+
+  if (authLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAuthenticated || user?.role === "admin") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <PortalNotificationsProvider>
+      <PortalLayoutContent />
+    </PortalNotificationsProvider>
   );
 };
 

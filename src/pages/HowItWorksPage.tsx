@@ -13,7 +13,7 @@ const steps = [
 const HowItWorksPage = () => {
   return (
     <section className="py-20 px-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-serif text-5xl md:text-6xl text-gradient-gold font-semibold mb-4 text-center">Cómo Funciona</h1>
           <p className="text-center text-muted-foreground mb-16">Tu camino hacia el autoconocimiento en 5 pasos simples.</p>

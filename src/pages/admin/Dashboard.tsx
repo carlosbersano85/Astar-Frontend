@@ -242,7 +242,7 @@ const AdminDashboard = () => {
   const hasExtraData = totalOrders > 0 || totalBlog > 0 || totalQuestions > 0 || totalReports > 0;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {statsError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm">
           {statsError}

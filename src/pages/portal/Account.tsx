@@ -54,7 +54,7 @@ const Account = () => {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto flex items-center justify-center py-20">
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -72,7 +72,7 @@ const Account = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <div className="space-y-6">
         {/* Avatar Upload */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6 premium-shadow flex flex-col items-center">

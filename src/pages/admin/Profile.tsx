@@ -96,7 +96,7 @@ const AdminProfile = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Avatar & Name */}
       <div className="flex items-center gap-5 p-6 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm">
         <div className="relative group">

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 const Manifesto = () => {
   return (
     <section className="py-20 px-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
           <h1 className="font-serif text-5xl md:text-6xl text-gradient-gold font-semibold mb-4 text-center">Manifiesto</h1>
           <div className="h-px w-24 mx-auto bg-primary/40 mb-12" />

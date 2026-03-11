@@ -51,7 +51,7 @@ const AdminQuestionDetail = () => {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto flex items-center justify-center py-24">
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -59,7 +59,7 @@ const AdminQuestionDetail = () => {
 
   if (error && !question) {
     return (
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link to="/admin/questions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
           <ArrowLeft className="w-4 h-4" /> Volver a preguntas
         </Link>
@@ -71,7 +71,7 @@ const AdminQuestionDetail = () => {
   if (!question) return null;
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <Link to="/admin/questions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
         <ArrowLeft className="w-4 h-4" /> Volver a preguntas
       </Link>

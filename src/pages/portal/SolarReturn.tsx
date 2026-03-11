@@ -18,7 +18,7 @@ const SolarReturn = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto flex items-center justify-center py-20">
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -26,7 +26,7 @@ const SolarReturn = () => {
 
   if (!report) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link to="/portal/reports" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
           <ArrowLeft className="w-4 h-4" /> Volver a reportes
         </Link>
@@ -50,7 +50,7 @@ const SolarReturn = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <Link to="/portal/reports" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
         <ArrowLeft className="w-4 h-4" /> Volver a reportes
       </Link>

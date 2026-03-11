@@ -24,14 +24,14 @@ const Reports = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto flex items-center justify-center py-20">
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {defaultReportTypes.map((r, i) => (
           <motion.div key={r.to} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>

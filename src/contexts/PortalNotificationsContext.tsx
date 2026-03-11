@@ -1,27 +1,27 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { adminGetNotifications, type AdminNotificationItem } from "@/lib/api";
+import { portalGetNotifications, type PortalNotification } from "@/lib/api";
 
-interface AdminNotificationsContextType {
-  notifications: AdminNotificationItem[];
+interface PortalNotificationsContextType {
+  notifications: PortalNotification[];
   loading: boolean;
   refetch: () => Promise<void>;
 }
 
-const AdminNotificationsContext = createContext<AdminNotificationsContextType | null>(null);
+const PortalNotificationsContext = createContext<PortalNotificationsContextType | null>(null);
 
-export function AdminNotificationsProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<AdminNotificationItem[]>([]);
+export function PortalNotificationsProvider({ children }: { children: ReactNode }) {
+  const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
-    const data = await adminGetNotifications();
+    const data = await portalGetNotifications();
     setNotifications(data);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    adminGetNotifications()
+    portalGetNotifications()
       .then((data) => {
         if (!cancelled) setNotifications(data);
       })
@@ -42,14 +42,14 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
   }, [refetch]);
 
   return (
-    <AdminNotificationsContext.Provider value={{ notifications, loading, refetch }}>
+    <PortalNotificationsContext.Provider value={{ notifications, loading, refetch }}>
       {children}
-    </AdminNotificationsContext.Provider>
+    </PortalNotificationsContext.Provider>
   );
 }
 
-export function useAdminNotifications() {
-  const ctx = useContext(AdminNotificationsContext);
-  if (!ctx) throw new Error("useAdminNotifications must be used within AdminNotificationsProvider");
+export function usePortalNotifications() {
+  const ctx = useContext(PortalNotificationsContext);
+  if (!ctx) throw new Error("usePortalNotifications must be used within PortalNotificationsProvider");
   return ctx;
 }

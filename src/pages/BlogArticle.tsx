@@ -33,7 +33,7 @@ const BlogArticle = () => {
 
   return (
     <section className="py-20 px-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link to="/blog" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-10">
           <ArrowLeft className="w-4 h-4" /> Volver al blog
         </Link>
