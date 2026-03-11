@@ -140,7 +140,7 @@ const BirthChartPreview = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto sm:min-w-[200px] px-6 py-3 rounded-full shimmer-gold text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 mx-auto"
+            className="w-full sm:w-auto sm:min-w-[200px] mt-20 px-6 py-3 rounded-full shimmer-gold text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 mx-auto"
           >
             {loading ? (
               <>
