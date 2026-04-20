@@ -23,6 +23,8 @@ const BlogArticle = lazy(() => import("@/pages/BlogArticle"));
 const PortalPreviewPage = lazy(() => import("@/pages/PortalPreviewPage"));
 const HowItWorksPage = lazy(() => import("@/pages/HowItWorksPage"));
 const Subscribe = lazy(() => import("@/pages/Subscribe"));
+const SubscribePayPalSuccess = lazy(() => import("@/pages/SubscribePayPalSuccess"));
+const SubscribePayPalCancel = lazy(() => import("@/pages/SubscribePayPalCancel"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 
@@ -76,6 +78,8 @@ const App = () => (
                   <Route path="/portal-preview" element={<PortalPreviewPage />} />
                   <Route path="/how-it-works" element={<HowItWorksPage />} />
                   <Route path="/subscribe" element={<Subscribe />} />
+                  <Route path="/subscribe/paypal/success" element={<SubscribePayPalSuccess />} />
+                  <Route path="/subscribe/paypal/cancel" element={<SubscribePayPalCancel />} />
                 </Route>
 
                 {/* Standalone auth pages */}

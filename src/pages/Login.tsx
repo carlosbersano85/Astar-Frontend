@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useNavigate, Link, Navigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import Starfield from "@/components/landing/Starfield";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiCreatePayPalSubscription, type SubscriptionPlan } from "@/lib/api";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, logout, isAuthenticated, isAdmin, authLoading } = useAuth();
   const { resolvedTheme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +17,10 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const paypalIntent =
+    (location.state as { paypalSubscriptionIntent?: { plan: SubscriptionPlan; billing: "monthly" | "annual" } } | null)
+      ?.paypalSubscriptionIntent ?? null;
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to={isAdmin ? "/admin" : "/portal"} replace />;
@@ -33,6 +39,17 @@ const Login = () => {
           await logout();
           setError("Para acceder al panel de administración, usa la página de inicio de sesión de administrador.");
           return;
+        }
+        if (paypalIntent) {
+          try {
+            const subscription = await apiCreatePayPalSubscription(paypalIntent);
+            window.location.assign(subscription.approvalUrl);
+            return;
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "No se pudo iniciar PayPal.";
+            setError(message);
+            return;
+          }
         }
         navigate("/portal");
       } else {

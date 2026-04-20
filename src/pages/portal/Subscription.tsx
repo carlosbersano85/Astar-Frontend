@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CreditCard, Calendar, Receipt, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { portalGetProfile, portalGetMyOrders, type PortalProfile, type PortalOrder } from "@/lib/api";
+import { apiCancelPayPalSubscription, portalGetProfile, portalGetMyOrders, type PortalProfile, type PortalOrder } from "@/lib/api";
 import EmptyState from "@/components/EmptyState";
 
 function formatOrderDate(iso: string) {
@@ -50,6 +50,7 @@ const Subscription = () => {
   const [profile, setProfile] = useState<PortalProfile | null>(null);
   const [orders, setOrders] = useState<PortalOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     Promise.all([portalGetProfile(), portalGetMyOrders()]).then(([p, o]) => {
@@ -58,6 +59,23 @@ const Subscription = () => {
       setLoading(false);
     });
   }, []);
+
+  const handleCancelSubscription = async () => {
+    if (cancelling || status !== "active") return;
+    const confirm = window.confirm("¿Seguro que quieres cancelar tu suscripción?");
+    if (!confirm) return;
+
+    try {
+      setCancelling(true);
+      await apiCancelPayPalSubscription();
+      const updatedProfile = await portalGetProfile();
+      setProfile(updatedProfile);
+    } catch {
+      window.alert("No se pudo cancelar la suscripción.");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -102,8 +120,12 @@ const Subscription = () => {
           <button className="px-6 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">
             Actualizar Método de Pago
           </button>
-          <button className="px-6 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors">
-            Cancelar Suscripción
+          <button
+            onClick={handleCancelSubscription}
+            disabled={status !== "active" || cancelling}
+            className="px-6 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {cancelling ? "Cancelando..." : "Cancelar Suscripción"}
           </button>
         </div>
       </motion.div>

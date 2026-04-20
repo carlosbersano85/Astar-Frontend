@@ -2,6 +2,9 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 const getToken = (): string | null => localStorage.getItem("astar_token");
 
+export type SubscriptionPlan = "essentials" | "portal" | "depth";
+export type BillingCycle = "monthly" | "annual";
+
 export interface ApiUser {
   id: string;
   email: string;
@@ -58,6 +61,60 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem("astar_token");
+}
+
+export async function apiCreatePayPalSubscription(data: {
+  plan: SubscriptionPlan;
+  billing: BillingCycle;
+}): Promise<{ subscriptionId: string; approvalUrl: string }> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar la suscripción con PayPal");
+  }
+  return body as { subscriptionId: string; approvalUrl: string };
+}
+
+export async function apiConfirmPayPalSubscription(subscriptionId: string): Promise<{
+  subscriptionId: string;
+  paypalStatus: string;
+  subscriptionStatus: "active" | "inactive" | "cancelled";
+  plan: SubscriptionPlan | null;
+  billing: BillingCycle | null;
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar la suscripción con PayPal");
+  }
+  return body as {
+    subscriptionId: string;
+    paypalStatus: string;
+    subscriptionStatus: "active" | "inactive" | "cancelled";
+    plan: SubscriptionPlan | null;
+    billing: BillingCycle | null;
+  };
+}
+
+export async function apiCancelPayPalSubscription(reason?: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/cancel`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo cancelar la suscripción");
+  }
+  return body as { ok: true };
 }
 
 function authHeaders(): HeadersInit {

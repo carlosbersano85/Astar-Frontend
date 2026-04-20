@@ -1,6 +1,10 @@
 import { motion } from "framer-motion";
 import { Check, Shield, Star, Crown } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { apiCreatePayPalSubscription, type SubscriptionPlan } from "@/lib/api";
 
 const plans = [
   {
@@ -54,6 +58,44 @@ const plans = [
 
 const PricingSection = () => {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const planKeyByName: Record<string, SubscriptionPlan> = {
+    Essentials: "essentials",
+    Portal: "portal",
+    Depth: "depth",
+  };
+
+  const handleSubscribe = async (planName: string) => {
+    const plan = planKeyByName[planName];
+    if (!plan) return;
+
+    if (!isAuthenticated) {
+      toast({
+        title: "Inicia sesión para continuar",
+        description: "Necesitas una cuenta para activar tu suscripción.",
+      });
+      navigate("/login", { state: { paypalSubscriptionIntent: { plan, billing } } });
+      return;
+    }
+
+    try {
+      setLoadingPlan(plan);
+      const result = await apiCreatePayPalSubscription({ plan, billing });
+      window.location.assign(result.approvalUrl);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo iniciar el pago.";
+      toast({
+        title: "Error con PayPal",
+        description: message,
+        variant: "destructive",
+      });
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <section id="subscription" className="relative py-32 px-6">
@@ -144,12 +186,14 @@ const PricingSection = () => {
 
               {/* CTA */}
               <button
+                onClick={() => handleSubscribe(plan.name)}
+                disabled={loadingPlan === planKeyByName[plan.name]}
                 className={`w-full py-3.5 rounded-full font-medium tracking-wide text-sm transition-all duration-300 mb-8 ${plan.highlighted
                     ? "shimmer-gold text-primary-foreground hover:opacity-90"
                     : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
-                  }`}
+                  } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
-                {plan.cta}
+                {loadingPlan === planKeyByName[plan.name] ? "Redirigiendo..." : plan.cta}
               </button>
 
               {/* Divider */}
@@ -178,7 +222,7 @@ const PricingSection = () => {
         >
           <p className="text-sm text-muted-foreground">
             <span className="text-foreground">¿Necesitas más?</span> Puedes añadir preguntas extra o sesiones privadas como
-            complemento a tu suscripción. · Stripe · Mercado Pago
+            complemento a tu suscripción. · PayPal
           </p>
         </motion.div>
       </div>
