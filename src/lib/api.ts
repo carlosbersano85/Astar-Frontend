@@ -117,6 +117,82 @@ export async function apiCancelPayPalSubscription(reason?: string): Promise<{ ok
   return body as { ok: true };
 }
 
+export interface PayPalExtraSessionPricing {
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}
+
+export async function apiGetPayPalExtraSessionPricing(): Promise<PayPalExtraSessionPricing> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/pricing`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+  }
+  return body as PayPalExtraSessionPricing;
+}
+
+export async function apiCreatePayPalExtraSessionOrder(): Promise<{
+  orderId: string;
+  approvalUrl: string;
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+  }
+  return body as {
+    orderId: string;
+    approvalUrl: string;
+    subscriberAmount: string;
+    nonSubscriberAmount: string;
+    amount: string;
+    isSubscriber: boolean;
+    currency: string;
+  };
+}
+
+export async function apiConfirmPayPalExtraSessionOrder(orderId: string): Promise<{
+  ok: true;
+  orderId: string;
+  created?: boolean;
+  amount: string;
+  currency: string;
+  tier: "subscriber" | "standard";
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ orderId, subscriptionId: orderId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+  }
+  return body as {
+    ok: true;
+    orderId: string;
+    created?: boolean;
+    amount: string;
+    currency: string;
+    tier: "subscriber" | "standard";
+  };
+}
+
 function authHeaders(): HeadersInit {
   const token = getToken();
   return {

@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Check, Shield, Star, Crown } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { apiCreatePayPalSubscription, type SubscriptionPlan } from "@/lib/api";
 
 const plans = [
   {
@@ -52,6 +55,44 @@ const plans = [
 
 const Subscribe = () => {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const planKeyByName: Record<string, SubscriptionPlan> = {
+    Essentials: "essentials",
+    Portal: "portal",
+    Depth: "depth",
+  };
+
+  const handleSubscribe = async (planName: string) => {
+    const plan = planKeyByName[planName];
+    if (!plan) return;
+
+    if (!isAuthenticated) {
+      toast({
+        title: "Inicia sesión para continuar",
+        description: "Necesitas una cuenta para activar tu suscripción.",
+      });
+      navigate("/login", { state: { paypalSubscriptionIntent: { plan, billing } } });
+      return;
+    }
+
+    try {
+      setLoadingPlan(plan);
+      const result = await apiCreatePayPalSubscription({ plan, billing });
+      window.location.assign(result.approvalUrl);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo iniciar el pago.";
+      toast({
+        title: "Error con PayPal",
+        description: message,
+        variant: "destructive",
+      });
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <section className="py-20 px-6">
@@ -129,13 +170,15 @@ const Subscribe = () => {
               {/* CTA Buttons */}
               <div className="space-y-3 mb-8">
                 <button
+                  onClick={() => handleSubscribe(plan.name)}
+                  disabled={loadingPlan === planKeyByName[plan.name]}
                   className={`w-full py-3.5 rounded-xl font-medium tracking-wide text-sm transition-all duration-300 ${
                     plan.highlighted
                       ? "shimmer-gold text-primary-foreground hover:opacity-90 glow-gold"
                       : "shimmer-gold text-primary-foreground hover:opacity-90"
-                  }`}
+                  } disabled:opacity-60 disabled:cursor-not-allowed`}
                 >
-                  Pagar con Stripe
+                  {loadingPlan === planKeyByName[plan.name] ? "Redirigiendo..." : "Pagar con Paypal"}
                 </button>
                 <button className="w-full py-3.5 rounded-xl bg-accent border border-border/50 text-foreground font-medium tracking-wide hover:bg-accent/80 transition-colors text-sm">
                   Pagar con Mercado Pago

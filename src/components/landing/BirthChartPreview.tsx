@@ -5,7 +5,7 @@ import { format, parse } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import TimePicker from "@/components/ui/time-picker";
+import TimePicker from "../ui/time-picker";
 import { cn } from "@/lib/utils";
 import { apiBirthChartPreview, type BirthChartPreviewResult } from "@/lib/api";
 
@@ -97,6 +97,10 @@ const BirthChartPreview = () => {
                   <Calendar
                     mode="single"
                     selected={birthDate ? parse(birthDate, "yyyy-MM-dd", new Date()) : undefined}
+                    onDayClick={(day) => {
+                      setBirthDate(format(day, "yyyy-MM-dd"));
+                      setDatePickerOpen(false);
+                    }}
                     onSelect={(date) => {
                       if (date) {
                         setBirthDate(format(date, "yyyy-MM-dd"));
