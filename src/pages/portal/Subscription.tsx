@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CreditCard, Calendar, Receipt, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   apiCancelMercadoPagoSubscription,
   apiCancelPayPalSubscription,
@@ -54,6 +55,7 @@ function nextRenewalFromLastOrder(createdAt: string, type: string) {
 }
 
 const Subscription = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<PortalProfile | null>(null);
   const [orders, setOrders] = useState<PortalOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +94,15 @@ const Subscription = () => {
     } finally {
       setCancelling(false);
     }
+  };
+
+  const handleUpdatePaymentMethod = () => {
+    const proceed = window.confirm(
+      "Te llevaremos al checkout para actualizar tu método de pago. ¿Deseas continuar?",
+    );
+    if (!proceed) return;
+
+    navigate("/subscribe");
   };
 
   if (loading) {
@@ -134,7 +145,10 @@ const Subscription = () => {
           </div>
         )}
         <div className="flex gap-3 flex-wrap">
-          <button className="px-6 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">
+          <button
+            onClick={handleUpdatePaymentMethod}
+            className="px-6 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors"
+          >
             Actualizar Método de Pago
           </button>
           <button

@@ -270,7 +270,7 @@ const Purchase = () => {
 
         {confirming && (
           <div className="mt-6 rounded-xl p-3 border border-primary/30 bg-primary/10 text-sm text-foreground flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Confirmando pago con PayPal...
+            <Loader2 className="w-4 h-4 animate-spin" /> Confirmando pago ...
           </div>
         )}
 
