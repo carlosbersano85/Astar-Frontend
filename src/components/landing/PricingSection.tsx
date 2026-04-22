@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiCreatePayPalSubscription, type SubscriptionPlan } from "@/lib/api";
+import {
+  apiCreateMercadoPagoSubscription,
+  apiCreatePayPalSubscription,
+  type SubscriptionPlan,
+} from "@/lib/api";
 
 const plans = [
   {
@@ -59,6 +63,7 @@ const plans = [
 const PricingSection = () => {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<"paypal" | "mercado_pago" | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -69,7 +74,7 @@ const PricingSection = () => {
     Depth: "depth",
   };
 
-  const handleSubscribe = async (planName: string) => {
+  const handleSubscribe = async (planName: string, provider: "paypal" | "mercado_pago") => {
     const plan = planKeyByName[planName];
     if (!plan) return;
 
@@ -78,22 +83,29 @@ const PricingSection = () => {
         title: "Inicia sesión para continuar",
         description: "Necesitas una cuenta para activar tu suscripción.",
       });
-      navigate("/login", { state: { paypalSubscriptionIntent: { plan, billing } } });
+      navigate("/login", { state: { subscriptionIntent: { plan, billing, provider } } });
       return;
     }
 
     try {
       setLoadingPlan(plan);
-      const result = await apiCreatePayPalSubscription({ plan, billing });
+      setLoadingProvider(provider);
+      const result = provider === "paypal"
+        ? await apiCreatePayPalSubscription({ plan, billing })
+        : await apiCreateMercadoPagoSubscription({ plan, billing });
+      if (provider === "mercado_pago") {
+        localStorage.setItem("astar_mp_subscription_id", result.subscriptionId);
+      }
       window.location.assign(result.approvalUrl);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "No se pudo iniciar el pago.";
       toast({
-        title: "Error con PayPal",
+        title: provider === "paypal" ? "Error con PayPal" : "Error con Mercado Pago",
         description: message,
         variant: "destructive",
       });
       setLoadingPlan(null);
+      setLoadingProvider(null);
     }
   };
 
@@ -185,16 +197,29 @@ const PricingSection = () => {
               <p className="text-sm text-muted-foreground mb-8">{plan.tagline}</p>
 
               {/* CTA */}
-              <button
-                onClick={() => handleSubscribe(plan.name)}
-                disabled={loadingPlan === planKeyByName[plan.name]}
-                className={`w-full py-3.5 rounded-full font-medium tracking-wide text-sm transition-all duration-300 mb-8 ${plan.highlighted
-                    ? "shimmer-gold text-primary-foreground hover:opacity-90"
-                    : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
-                  } disabled:opacity-60 disabled:cursor-not-allowed`}
-              >
-                {loadingPlan === planKeyByName[plan.name] ? "Redirigiendo..." : plan.cta}
-              </button>
+              <div className="space-y-3 mb-8">
+                <button
+                  onClick={() => handleSubscribe(plan.name, "paypal")}
+                  disabled={loadingPlan === planKeyByName[plan.name]}
+                  className={`w-full py-3.5 rounded-full font-medium tracking-wide text-sm transition-all duration-300 ${plan.highlighted
+                      ? "shimmer-gold text-primary-foreground hover:opacity-90"
+                      : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                >
+                  {loadingPlan === planKeyByName[plan.name] && loadingProvider === "paypal"
+                    ? "Redirigiendo..."
+                    : `${plan.cta} con PayPal`}
+                </button>
+                <button
+                  onClick={() => handleSubscribe(plan.name, "mercado_pago")}
+                  disabled={loadingPlan === planKeyByName[plan.name]}
+                  className="w-full py-3.5 rounded-full border border-border text-foreground hover:border-primary/50 hover:bg-primary/5 font-medium tracking-wide text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loadingPlan === planKeyByName[plan.name] && loadingProvider === "mercado_pago"
+                    ? "Redirigiendo..."
+                    : `${plan.cta} con Mercado Pago`}
+                </button>
+              </div>
 
               {/* Divider */}
               <div className="h-px w-full bg-border/50 mb-8" />

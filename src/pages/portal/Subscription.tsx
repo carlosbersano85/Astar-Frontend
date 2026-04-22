@@ -1,7 +1,14 @@
 import { motion } from "framer-motion";
 import { CreditCard, Calendar, Receipt, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { apiCancelPayPalSubscription, portalGetProfile, portalGetMyOrders, type PortalProfile, type PortalOrder } from "@/lib/api";
+import {
+  apiCancelMercadoPagoSubscription,
+  apiCancelPayPalSubscription,
+  portalGetMyOrders,
+  portalGetProfile,
+  type PortalOrder,
+  type PortalProfile,
+} from "@/lib/api";
 import EmptyState from "@/components/EmptyState";
 
 function formatOrderDate(iso: string) {
@@ -67,11 +74,21 @@ const Subscription = () => {
 
     try {
       setCancelling(true);
-      await apiCancelPayPalSubscription();
+      const latestMethod = (orders[0]?.method ?? "").toLowerCase();
+      if (latestMethod === "mercado_pago") {
+        const mpSubscriptionId = localStorage.getItem("astar_mp_subscription_id") ?? "";
+        if (!mpSubscriptionId) {
+          throw new Error("No encontramos el identificador de suscripción de Mercado Pago.");
+        }
+        await apiCancelMercadoPagoSubscription(mpSubscriptionId);
+      } else {
+        await apiCancelPayPalSubscription();
+      }
       const updatedProfile = await portalGetProfile();
       setProfile(updatedProfile);
-    } catch {
-      window.alert("No se pudo cancelar la suscripción.");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo cancelar la suscripción.";
+      window.alert(message);
     } finally {
       setCancelling(false);
     }

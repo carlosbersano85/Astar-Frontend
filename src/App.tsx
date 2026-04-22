@@ -25,6 +25,8 @@ const HowItWorksPage = lazy(() => import("@/pages/HowItWorksPage"));
 const Subscribe = lazy(() => import("@/pages/Subscribe"));
 const SubscribePayPalSuccess = lazy(() => import("@/pages/SubscribePayPalSuccess"));
 const SubscribePayPalCancel = lazy(() => import("@/pages/SubscribePayPalCancel"));
+const SubscribeMercadoPagoSuccess = lazy(() => import("@/pages/SubscribeMercadoPagoSuccess"));
+const SubscribeMercadoPagoCancel = lazy(() => import("@/pages/SubscribeMercadoPagoCancel"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 
@@ -80,6 +82,8 @@ const App = () => (
                   <Route path="/subscribe" element={<Subscribe />} />
                   <Route path="/subscribe/paypal/success" element={<SubscribePayPalSuccess />} />
                   <Route path="/subscribe/paypal/cancel" element={<SubscribePayPalCancel />} />
+                  <Route path="/subscribe/mercado-pago/success" element={<SubscribeMercadoPagoSuccess />} />
+                  <Route path="/subscribe/mercado-pago/cancel" element={<SubscribeMercadoPagoCancel />} />
                 </Route>
 
                 {/* Standalone auth pages */}

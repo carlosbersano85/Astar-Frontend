@@ -5,7 +5,11 @@ import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import Starfield from "@/components/landing/Starfield";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiCreatePayPalSubscription, type SubscriptionPlan } from "@/lib/api";
+import {
+  apiCreateMercadoPagoSubscription,
+  apiCreatePayPalSubscription,
+  type SubscriptionPlan,
+} from "@/lib/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,9 +22,22 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const paypalIntent =
-    (location.state as { paypalSubscriptionIntent?: { plan: SubscriptionPlan; billing: "monthly" | "annual" } } | null)
-      ?.paypalSubscriptionIntent ?? null;
+  const locationState = location.state as {
+    subscriptionIntent?: {
+      plan: SubscriptionPlan;
+      billing: "monthly" | "annual";
+      provider?: "paypal" | "mercado_pago";
+    };
+    paypalSubscriptionIntent?: {
+      plan: SubscriptionPlan;
+      billing: "monthly" | "annual";
+    };
+  } | null;
+
+  const subscriptionIntent = locationState?.subscriptionIntent
+    ?? (locationState?.paypalSubscriptionIntent
+      ? { ...locationState.paypalSubscriptionIntent, provider: "paypal" as const }
+      : null);
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to={isAdmin ? "/admin" : "/portal"} replace />;
@@ -40,13 +57,27 @@ const Login = () => {
           setError("Para acceder al panel de administración, usa la página de inicio de sesión de administrador.");
           return;
         }
-        if (paypalIntent) {
+        if (subscriptionIntent) {
           try {
-            const subscription = await apiCreatePayPalSubscription(paypalIntent);
+            const provider = subscriptionIntent.provider ?? "paypal";
+            const subscription = provider === "paypal"
+              ? await apiCreatePayPalSubscription({
+                plan: subscriptionIntent.plan,
+                billing: subscriptionIntent.billing,
+              })
+              : await apiCreateMercadoPagoSubscription({
+                plan: subscriptionIntent.plan,
+                billing: subscriptionIntent.billing,
+              });
+            if (provider === "mercado_pago") {
+              localStorage.setItem("astar_mp_subscription_id", subscription.subscriptionId);
+            }
             window.location.assign(subscription.approvalUrl);
             return;
           } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "No se pudo iniciar PayPal.";
+            const message = error instanceof Error
+              ? error.message
+              : "No se pudo iniciar el pago.";
             setError(message);
             return;
           }
