@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Send, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
@@ -99,10 +100,10 @@ export function AIChatWidget() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="h-full flex items-center justify-center p-8 rounded-xl border border-border/50 bg-card/80 backdrop-blur-xl">
         <div className="text-center">
-          <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-          <p className="text-gray-600">Sign in to use AI Chat</p>
+          <Lock className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-muted-foreground">Sign in to use AI Chat</p>
         </div>
       </div>
     );
@@ -110,33 +111,36 @@ export function AIChatWidget() {
 
   if (checkingAccess) {
     return (
-      <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border border-gray-200">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <div className="h-full flex items-center justify-center p-8 rounded-xl border border-border/50 bg-card/80 backdrop-blur-xl">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!canAccess) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-dashed border-purple-200">
-        <Lock className="w-12 h-12 text-purple-600 mb-3" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Upgrade to LUMINARY</h3>
-        <p className="text-gray-600 mb-4 text-center">
+      <div className="h-full flex flex-col items-center justify-center p-8 rounded-xl border border-border/50 bg-gradient-to-br from-card/95 via-card to-accent/30 backdrop-blur-xl">
+        <Lock className="w-12 h-12 text-primary mb-3" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">Upgrade to LUMINARY</h3>
+        <p className="text-muted-foreground mb-4 text-center">
           Access personalized AI astrology analysis powered by your birth chart data
         </p>
-        <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+        <Link
+          to="/subscribe"
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition"
+        >
           Subscribe Now
-        </button>
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="flex flex-col h-full rounded-xl border border-border/50 bg-card/80 backdrop-blur-xl shadow-sm">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
-        <h2 className="text-lg font-semibold text-white">Astro AI Assistant</h2>
-        <p className="text-sm text-blue-100">Personalized insights based on your birth chart</p>
+      <div className="p-4 border-b border-border/40 bg-gradient-to-r from-primary/90 to-primary/70">
+        <h2 className="text-lg font-semibold text-primary-foreground">Astro AI Assistant</h2>
+        <p className="text-sm text-primary-foreground/80">Personalized insights based on your birth chart</p>
       </div>
 
       {/* Messages */}
@@ -144,11 +148,11 @@ export function AIChatWidget() {
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-accent/70 rounded-full flex items-center justify-center mx-auto mb-3 border border-border/40">
                 <span className="text-xl">✨</span>
               </div>
-              <p className="text-gray-600 font-medium mb-1">Welcome to Astro AI</p>
-              <p className="text-sm text-gray-500">Ask questions about your birth chart, future, or personality</p>
+              <p className="text-foreground font-medium mb-1">Welcome to Astro AI</p>
+              <p className="text-sm text-muted-foreground">Ask questions about your birth chart, future, or personality</p>
             </div>
           </div>
         )}
@@ -161,12 +165,12 @@ export function AIChatWidget() {
             <div
               className={`max-w-xs px-4 py-2 rounded-lg ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-none'
-                  : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                  ? 'bg-primary text-primary-foreground rounded-br-none'
+                  : 'bg-accent/70 text-foreground rounded-bl-none border border-border/40'
               }`}
             >
               <p className="text-sm">{message.content}</p>
-              <span className={`text-xs mt-1 block ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+              <span className={`text-xs mt-1 block ${message.role === 'user' ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}>
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -175,7 +179,7 @@ export function AIChatWidget() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg rounded-bl-none">
+            <div className="bg-accent/70 text-foreground px-4 py-2 rounded-lg rounded-bl-none border border-border/40">
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           </div>
@@ -183,7 +187,7 @@ export function AIChatWidget() {
 
         {error && (
           <div className="flex justify-center">
-            <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+            <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-lg text-sm flex items-center gap-2 border border-destructive/30">
               <AlertCircle className="w-4 h-4" />
               {error}
             </div>
@@ -194,7 +198,7 @@ export function AIChatWidget() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border/40">
         <div className="flex gap-2">
           <input
             type="text"
@@ -208,12 +212,12 @@ export function AIChatWidget() {
             }}
             placeholder="Ask about your birth chart..."
             disabled={loading || !canAccess}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+            className="flex-1 px-4 py-2 rounded-lg bg-background/70 border border-border/60 text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 disabled:opacity-60"
           />
           <button
             onClick={sendMessage}
             disabled={loading || !input.trim() || !canAccess}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition flex items-center gap-2"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>

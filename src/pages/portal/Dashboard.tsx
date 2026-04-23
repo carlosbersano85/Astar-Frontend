@@ -9,7 +9,7 @@ import { AIChatWidget } from "@/components/portal/AIChatWidget";
 
 const PortalDashboard = () => {
   const { user } = useAuth();
-  const [reports, setReports] = useState<{ id: string; type: string; title: string }[]>([]);
+  const [reports, setReports] = useState<{ id: string; type: string; title: string; createdAt?: string }[]>([]);
   const [messages, setMessages] = useState<{ id: string; content: string; createdAt: string }[]>([]);
   const [profile, setProfile] = useState<{ subscriptionStatus: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,9 +144,9 @@ const PortalDashboard = () => {
         </div>
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="max-w-2xl">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
         <h2 className="font-serif text-xl text-foreground mb-4">Astro AI Assistant</h2>
-        <div className="h-96">
+        <div className="h-[70vh] min-h-[520px] lg:h-[calc(100vh-220px)]">
           <AIChatWidget />
         </div>
       </motion.div>
