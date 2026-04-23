@@ -519,6 +519,97 @@ export async function portalGetMessages(): Promise<PortalMessage[]> {
   return res.json();
 }
 
+// Generic API client for component requests
+// ✅ FIXED - properly merges headers with auth token
+export const api = {
+  async get(url: string, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'GET',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data };
+  },
+
+  async post(url: string, data?: any, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'POST',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const response = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data: response };
+  },
+
+  async patch(url: string, data?: any, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'PATCH',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const response = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data: response };
+  },
+
+  async delete(url: string, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'DELETE',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const response = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data: response };
+  },
+};
+
+// Astro API functions
+export async function astroGetUserNatalChart(): Promise<any> {
+  const token = getToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch(`${API_BASE}/astro/natal-chart/user`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch natal chart');
+  return res.json();
+}
+
+export async function astroGetUserNumerology(): Promise<any> {
+  const token = getToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch(`${API_BASE}/astro/numerology/user`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch numerology');
+  return res.json();
+}
+
 export async function portalGetNotifications(): Promise<PortalNotification[]> {
   const res = await fetch(`${API_BASE}/portal/notifications`, { headers: authHeaders() });
   if (!res.ok) return [];
