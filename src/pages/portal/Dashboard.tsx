@@ -5,6 +5,7 @@ import { LayoutDashboard, FileText, MessageCircle, HelpCircle, ChevronRight, Sun
 import { useState, useEffect } from "react";
 import { portalGetReports, portalGetMessages, portalGetProfile } from "@/lib/api";
 import EmptyState from "@/components/EmptyState";
+import { AIChatWidget } from "@/components/portal/AIChatWidget";
 
 const PortalDashboard = () => {
   const { user } = useAuth();
@@ -142,6 +143,13 @@ const PortalDashboard = () => {
           ))}
         </div>
       </div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="max-w-2xl">
+        <h2 className="font-serif text-xl text-foreground mb-4">Astro AI Assistant</h2>
+        <div className="h-96">
+          <AIChatWidget />
+        </div>
+      </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-2xl p-6 premium-shadow">
         <h3 className="font-serif text-xl text-foreground mb-4">Actividad Reciente</h3>
