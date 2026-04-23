@@ -43,7 +43,14 @@ function planLabelFromType(type: string) {
 function nextRenewalFromLastOrder(createdAt: string, type: string) {
   try {
     const d = new Date(createdAt);
-    if (type?.toLowerCase().includes("month") || type?.toLowerCase() === "monthly" || type?.toLowerCase() === "mensual") {
+    if (
+      type?.toLowerCase().includes("month") ||
+      type?.toLowerCase() === "monthly" ||
+      type?.toLowerCase() === "mensual" ||
+      type?.toLowerCase() === "annual" ||
+      type?.toLowerCase() === "year" ||
+      type?.toLowerCase() === "anual"
+    ) {
       d.setMonth(d.getMonth() + 1);
     } else {
       d.setFullYear(d.getFullYear() + 1);
