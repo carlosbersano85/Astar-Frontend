@@ -1,0 +1,123 @@
+/* ─── ASTAR BRAND FONTS ─── */
+
+/* Arsenica Trial - Multiple weights */
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-ThinItalic.ttf') format('truetype');
+  font-weight: 100;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-LightItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Demibold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-DemiboldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-Extrabold.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Arsenica Trial';
+  src: url('/4TIPOGRAFIA/Arsenica/ArsenicaTrial-ExtraboldItalic.ttf') format('truetype');
+  font-weight: 900;
+  font-style: italic;
+}
+
+/* Hero - Body font */
+@font-face {
+  font-family: 'Hero Light';
+  src: url('/4TIPOGRAFIA/hero/Hero Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hero';
+  src: url('/4TIPOGRAFIA/hero/Hero.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* TAN Pearl - Display/Subtitle font */
+@font-face {
+  font-family: 'TAN Pearl';
+  src: url('/4TIPOGRAFIA/tan%20pearl/TAN-PEARL.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}

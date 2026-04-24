@@ -1,0 +1,329 @@
+/* ─── ASTAR HOMEPAGE STYLES ─── */
+
+:root {
+  --purple: #573759;
+  --purple-dark: #3a2340;
+  --purple-deep: #1e0535;
+  --gold: #7c603e;
+  --gold-light: #bda76c;
+  --gold-bright: #e8c46a;
+  --lavender-1: #c39ed6;
+  --lavender-2: #d5b0dd;
+  --arena: #cdb6a8;
+  --arena-light: #f0e8d8;
+  --white: #ffffff;
+  --text-muted: #a89ab5;
+}
+
+/* ─── GENÉRICO ─── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 60px;
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(87, 55, 89, 0.3);
+  border: 1px solid rgba(189, 167, 108, 0.25);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  margin-bottom: 28px;
+}
+
+.section-title {
+  font-family: 'Arsenica Trial', serif;
+  font-size: clamp(36px, 5.5vw, 70px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  color: var(--white);
+}
+
+.section-title .gold {
+  color: var(--gold-bright);
+  font-style: italic;
+}
+
+.section-desc {
+  font-family: 'TAN Pearl', serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 600px;
+}
+
+/* ─── TESTIMONIOS CARRUSEL ─── */
+.testimonios {
+  background: linear-gradient(135deg, rgba(30, 5, 53, 0.95) 0%, rgba(87, 55, 89, 0.15) 100%);
+  border-top: 1px solid rgba(189, 167, 108, 0.12);
+  border-bottom: 1px solid rgba(189, 167, 108, 0.12);
+  position: relative;
+  z-index: 1;
+}
+
+.testimonios-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.carrusel-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.carrusel-track {
+  display: flex;
+  gap: 24px;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.testi-card {
+  background: rgba(20, 5, 35, 0.85);
+  border: 1px solid rgba(87, 55, 89, 0.5);
+  border-radius: 20px;
+  padding: 36px 32px;
+  position: relative;
+  flex: 0 0 calc(33.333% - 16px);
+  min-width: calc(33.333% - 16px);
+}
+
+.testi-card::before {
+  content: '"';
+  position: absolute;
+  top: 16px;
+  left: 24px;
+  font-family: 'Arsenica Trial', serif;
+  font-size: 60px;
+  color: rgba(232, 196, 106, 0.12);
+  line-height: 1;
+}
+
+.testi-text {
+  font-family: 'TAN Pearl', serif;
+  font-size: 16px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--arena);
+  line-height: 1.75;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.testi-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.testi-avatar {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--purple), var(--gold));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  flex-shrink: 0;
+  font-family: 'Arsenica Trial', serif;
+}
+
+.testi-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 1px;
+  display: block;
+}
+
+.testi-origin {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.testi-stars {
+  margin-left: auto;
+  color: var(--gold-bright);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+.carrusel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.carrusel-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(87, 55, 89, 0.3);
+  border: 1px solid rgba(189, 167, 108, 0.25);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-light);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.carrusel-btn:hover {
+  background: rgba(87, 55, 89, 0.6);
+  border-color: var(--gold-light);
+  color: var(--white);
+}
+
+.carrusel-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.carrusel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(189, 167, 108, 0.25);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.carrusel-dot.active {
+  background: var(--gold-bright);
+  transform: scale(1.3);
+}
+
+/* ─── FAQ ─── */
+.faq-list {
+  margin-top: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(87, 55, 89, 0.4);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.faq-item {
+  border-bottom: 1px solid rgba(87, 55, 89, 0.3);
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.faq-question {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 24px 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  text-align: left;
+  transition: background 0.3s;
+}
+
+.faq-question:hover {
+  background: rgba(87, 55, 89, 0.1);
+}
+
+.faq-q {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.faq-icon {
+  font-size: 18px;
+  color: var(--gold-light);
+  transition: transform 0.3s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.faq-item.open .faq-icon {
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s ease;
+  padding: 0 34px;
+}
+
+.faq-item.open .faq-answer {
+  max-height: 200px;
+  padding: 0 34px 24px;
+}
+
+.faq-a {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .section-inner {
+    padding: 70px 24px;
+  }
+
+  .carrusel-track {
+    flex-wrap: wrap;
+  }
+
+  .testi-card {
+    flex: 0 0 calc(50% - 12px);
+    min-width: calc(50% - 12px);
+  }
+}
+
+@media (max-width: 600px) {
+  .section-inner {
+    padding: 50px 16px;
+  }
+
+  .testi-card {
+    flex: 0 0 100%;
+    min-width: 100%;
+  }
+
+  .section-title {
+    font-size: clamp(28px, 5vw, 40px);
+  }
+}
