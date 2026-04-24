@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "next-themes";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import TimePicker from "@/components/ui/time-picker";
+import TimePicker from "../components/ui/time-picker";
 import { cn } from "@/lib/utils";
 
 const Register = () => {
@@ -138,6 +138,10 @@ const Register = () => {
                     <Calendar
                       mode="single"
                       selected={form.birthDate ? parse(form.birthDate, "yyyy-MM-dd", new Date()) : undefined}
+                      onDayClick={(day) => {
+                        update("birthDate", format(day, "yyyy-MM-dd"));
+                        setDatePickerOpen(false);
+                      }}
                       onSelect={(date) => {
                         if (date) {
                           update("birthDate", format(date, "yyyy-MM-dd"));

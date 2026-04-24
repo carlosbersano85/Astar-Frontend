@@ -6,7 +6,7 @@ import { format, parse } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import TimePicker from "@/components/ui/time-picker";
+import TimePicker from "../../components/ui/time-picker";
 import { portalGetProfile } from "@/lib/api";
 
 const Account = () => {
@@ -131,6 +131,7 @@ const Account = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <button
+                    type="button"
                     className={cn(
                       "w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 text-sm text-left flex items-center justify-between transition-colors focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
                       birthDate ? "text-foreground" : "text-muted-foreground"

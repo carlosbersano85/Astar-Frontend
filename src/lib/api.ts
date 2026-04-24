@@ -2,6 +2,9 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 const getToken = (): string | null => localStorage.getItem("astar_token");
 
+export type SubscriptionPlan = "essentials" | "portal" | "depth";
+export type BillingCycle = "monthly" | "annual";
+
 export interface ApiUser {
   id: string;
   email: string;
@@ -58,6 +61,266 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem("astar_token");
+}
+
+export async function apiCreatePayPalSubscription(data: {
+  plan: SubscriptionPlan;
+  billing: BillingCycle;
+}): Promise<{ subscriptionId: string; approvalUrl: string }> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar la suscripción con PayPal");
+  }
+  return body as { subscriptionId: string; approvalUrl: string };
+}
+
+export async function apiConfirmPayPalSubscription(subscriptionId: string): Promise<{
+  subscriptionId: string;
+  paypalStatus: string;
+  subscriptionStatus: "active" | "inactive" | "cancelled";
+  plan: SubscriptionPlan | null;
+  billing: BillingCycle | null;
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar la suscripción con PayPal");
+  }
+  return body as {
+    subscriptionId: string;
+    paypalStatus: string;
+    subscriptionStatus: "active" | "inactive" | "cancelled";
+    plan: SubscriptionPlan | null;
+    billing: BillingCycle | null;
+  };
+}
+
+export async function apiCancelPayPalSubscription(reason?: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/cancel`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo cancelar la suscripción");
+  }
+  return body as { ok: true };
+}
+
+export async function apiCreateMercadoPagoSubscription(data: {
+  plan: SubscriptionPlan;
+  billing: BillingCycle;
+}): Promise<{ subscriptionId: string; approvalUrl: string }> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/subscription/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar la suscripción con Mercado Pago");
+  }
+  return body as { subscriptionId: string; approvalUrl: string };
+}
+
+export async function apiConfirmMercadoPagoSubscription(subscriptionId: string): Promise<{
+  subscriptionId: string;
+  mercadoPagoStatus: string;
+  subscriptionStatus: "active" | "inactive" | "cancelled";
+  plan: SubscriptionPlan | null;
+  billing: BillingCycle | null;
+}> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/subscription/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId, preapprovalId: subscriptionId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar la suscripción con Mercado Pago");
+  }
+  return body as {
+    subscriptionId: string;
+    mercadoPagoStatus: string;
+    subscriptionStatus: "active" | "inactive" | "cancelled";
+    plan: SubscriptionPlan | null;
+    billing: BillingCycle | null;
+  };
+}
+
+export async function apiCancelMercadoPagoSubscription(subscriptionId: string, reason?: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/subscription/cancel`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId, preapprovalId: subscriptionId, reason }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo cancelar la suscripción");
+  }
+  return body as { ok: true };
+}
+
+export interface PayPalExtraSessionPricing {
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}
+
+export interface MercadoPagoExtraSessionPricing {
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}
+
+export async function apiGetPayPalExtraSessionPricing(): Promise<PayPalExtraSessionPricing> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/pricing`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+  }
+  return body as PayPalExtraSessionPricing;
+}
+
+export async function apiCreatePayPalExtraSessionOrder(): Promise<{
+  orderId: string;
+  approvalUrl: string;
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+  }
+  return body as {
+    orderId: string;
+    approvalUrl: string;
+    subscriberAmount: string;
+    nonSubscriberAmount: string;
+    amount: string;
+    isSubscriber: boolean;
+    currency: string;
+  };
+}
+
+export async function apiConfirmPayPalExtraSessionOrder(orderId: string): Promise<{
+  ok: true;
+  orderId: string;
+  created?: boolean;
+  amount: string;
+  currency: string;
+  tier: "subscriber" | "standard";
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ orderId, subscriptionId: orderId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+  }
+  return body as {
+    ok: true;
+    orderId: string;
+    created?: boolean;
+    amount: string;
+    currency: string;
+    tier: "subscriber" | "standard";
+  };
+}
+
+export async function apiGetMercadoPagoExtraSessionPricing(): Promise<MercadoPagoExtraSessionPricing> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/pricing`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+  }
+  return body as MercadoPagoExtraSessionPricing;
+}
+
+export async function apiCreateMercadoPagoExtraSessionPreference(): Promise<{
+  preferenceId: string;
+  checkoutUrl: string;
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+  }
+  return body as {
+    preferenceId: string;
+    checkoutUrl: string;
+    subscriberAmount: string;
+    nonSubscriberAmount: string;
+    amount: string;
+    isSubscriber: boolean;
+    currency: string;
+  };
+}
+
+export async function apiConfirmMercadoPagoExtraSessionPayment(paymentId: string): Promise<{
+  ok: true;
+  paymentId: string;
+  created?: boolean;
+  amount: string;
+  currency: string;
+  tier: "subscriber" | "standard";
+}> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ paymentId, collectionId: paymentId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+  }
+  return body as {
+    ok: true;
+    paymentId: string;
+    created?: boolean;
+    amount: string;
+    currency: string;
+    tier: "subscriber" | "standard";
+  };
 }
 
 function authHeaders(): HeadersInit {
