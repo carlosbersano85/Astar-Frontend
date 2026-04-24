@@ -108,18 +108,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     birthTime: string;
   }): Promise<{ ok: true } | { ok: false; error: string }> => {
     try {
-    const result = await apiRegister(data);
-    console.log('RAW register result:', JSON.stringify(result)); // ADD THIS
-    const { user: apiUser, access_token } = result;
-    console.log('apiUser:', JSON.stringify(apiUser)); // ADD THIS
-    console.log('access_token:', access_token); // ADD THIS
-    setToken(access_token);
-    setUser(mapApiUser(apiUser));
-    return { ok: true };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "No se pudo crear la cuenta.";
-    return { ok: false, error: message };
-  }
+      const { user: apiUser, access_token } = await apiRegister(data);
+      if (!apiUser || !access_token) {
+        throw new Error("Registration response was empty or malformed.");
+      }
+      setToken(access_token);
+      setUser(mapApiUser(apiUser));
+      return { ok: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "No se pudo crear la cuenta.";
+      return { ok: false, error: message };
+    }
   };
 
   const refreshUser = async () => {

@@ -14,6 +14,26 @@ export interface ApiUser {
   subscriptionStatus: "active" | "inactive" | "cancelled";
 }
 
+export interface AuthApiResponse {
+  user?: ApiUser;
+  access_token?: string;
+  accessToken?: string;
+  token?: string;
+  data?: {
+    user?: ApiUser;
+    access_token?: string;
+    accessToken?: string;
+    token?: string;
+  };
+}
+
+function extractAuthResponse(body: AuthApiResponse): { user?: ApiUser; access_token?: string } {
+  return {
+    user: body.user ?? body.data?.user,
+    access_token: body.access_token ?? body.accessToken ?? body.token ?? body.data?.access_token ?? body.data?.accessToken ?? body.data?.token,
+  };
+}
+
 export async function apiLogin(email: string, password: string): Promise<{ user: ApiUser; access_token: string }> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
@@ -24,7 +44,12 @@ export async function apiLogin(email: string, password: string): Promise<{ user:
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message ?? "Invalid credentials");
   }
-  return res.json();
+  const body = (await res.json().catch(() => ({}))) as AuthApiResponse;
+  const normalized = extractAuthResponse(body);
+  if (!normalized.user || !normalized.access_token) {
+    throw new Error("Login response was empty or malformed.");
+  }
+  return normalized as { user: ApiUser; access_token: string };
 }
 
 export async function apiRegister(data: {
@@ -40,9 +65,13 @@ export async function apiRegister(data: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  const body = await res.json().catch(() => ({}));
+  const body = (await res.json().catch(() => ({}))) as AuthApiResponse & { message?: string };
   if (!res.ok) throw new Error(body.message ?? "Registration failed");
-  return body;
+  const normalized = extractAuthResponse(body);
+  if (!normalized.user || !normalized.access_token) {
+    throw new Error("Registration response was empty or malformed.");
+  }
+  return normalized as { user: ApiUser; access_token: string };
 }
 
 export async function apiMe(): Promise<ApiUser | null> {
