@@ -360,9 +360,9 @@ export async function apiUpdateProfile(data: { name?: string; email?: string }):
     headers: authHeaders(),
     body: JSON.stringify(data),
   });
-  const err = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((err as { message?: string }).message ?? "No se pudo actualizar el perfil");
-  return res.json();
+  const body = await res.json().catch(() => ({})); // ✅ parse once
+  if (!res.ok) throw new Error((body as { message?: string }).message ?? "No se pudo actualizar el perfil");
+  return body as ApiUser; 
 }
 
 export async function apiChangePassword(currentPassword: string, newPassword: string): Promise<void> {
