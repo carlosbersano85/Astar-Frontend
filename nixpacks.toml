@@ -1,12 +1,11 @@
-# Railpack/Nixpacks config for frontend (Vite + React)
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm install"]
 
 [phases.build]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npx serve dist -s"
+cmd = "npm run preview"
