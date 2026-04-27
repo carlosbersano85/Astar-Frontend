@@ -1,6 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+// Railway production must always talk to the backend service, never localhost.
+const API_BASE = import.meta.env.PROD
+  ? "https://astarbackend-production.up.railway.app"
+  : (import.meta.env.VITE_API_URL?.trim() || "http://localhost:3000");
 
 const getToken = (): string | null => localStorage.getItem("astar_token");
+
+export type SubscriptionPlan = "essentials" | "portal" | "depth";
+export type BillingCycle = "monthly" | "annual";
 
 export interface ApiUser {
   id: string;
@@ -9,6 +15,26 @@ export interface ApiUser {
   role: "admin" | "client";
   isActive: boolean;
   subscriptionStatus: "active" | "inactive" | "cancelled";
+}
+
+export interface AuthApiResponse {
+  user?: ApiUser;
+  access_token?: string;
+  accessToken?: string;
+  token?: string;
+  data?: {
+    user?: ApiUser;
+    access_token?: string;
+    accessToken?: string;
+    token?: string;
+  };
+}
+
+function extractAuthResponse(body: AuthApiResponse): { user?: ApiUser; access_token?: string } {
+  return {
+    user: body.user ?? body.data?.user,
+    access_token: body.access_token ?? body.accessToken ?? body.token ?? body.data?.access_token ?? body.data?.accessToken ?? body.data?.token,
+  };
 }
 
 export async function apiLogin(email: string, password: string): Promise<{ user: ApiUser; access_token: string }> {
@@ -21,7 +47,12 @@ export async function apiLogin(email: string, password: string): Promise<{ user:
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message ?? "Invalid credentials");
   }
-  return res.json();
+  const body = (await res.json().catch(() => ({}))) as AuthApiResponse;
+  const normalized = extractAuthResponse(body);
+  if (!normalized.user || !normalized.access_token) {
+    throw new Error("Login response was empty or malformed.");
+  }
+  return normalized as { user: ApiUser; access_token: string };
 }
 
 export async function apiRegister(data: {
@@ -37,9 +68,13 @@ export async function apiRegister(data: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  const body = await res.json().catch(() => ({}));
+  const body = (await res.json().catch(() => ({}))) as AuthApiResponse & { message?: string };
   if (!res.ok) throw new Error(body.message ?? "Registration failed");
-  return body;
+  const normalized = extractAuthResponse(body);
+  if (!normalized.user || !normalized.access_token) {
+    throw new Error("Registration response was empty or malformed.");
+  }
+  return normalized as { user: ApiUser; access_token: string };
 }
 
 export async function apiMe(): Promise<ApiUser | null> {
@@ -58,6 +93,266 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem("astar_token");
+}
+
+export async function apiCreatePayPalSubscription(data: {
+  plan: SubscriptionPlan;
+  billing: BillingCycle;
+}): Promise<{ subscriptionId: string; approvalUrl: string }> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar la suscripción con PayPal");
+  }
+  return body as { subscriptionId: string; approvalUrl: string };
+}
+
+export async function apiConfirmPayPalSubscription(subscriptionId: string): Promise<{
+  subscriptionId: string;
+  paypalStatus: string;
+  subscriptionStatus: "active" | "inactive" | "cancelled";
+  plan: SubscriptionPlan | null;
+  billing: BillingCycle | null;
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar la suscripción con PayPal");
+  }
+  return body as {
+    subscriptionId: string;
+    paypalStatus: string;
+    subscriptionStatus: "active" | "inactive" | "cancelled";
+    plan: SubscriptionPlan | null;
+    billing: BillingCycle | null;
+  };
+}
+
+export async function apiCancelPayPalSubscription(reason?: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_BASE}/payments/paypal/subscription/cancel`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo cancelar la suscripción");
+  }
+  return body as { ok: true };
+}
+
+export async function apiCreateMercadoPagoSubscription(data: {
+  plan: SubscriptionPlan;
+  billing: BillingCycle;
+}): Promise<{ subscriptionId: string; approvalUrl: string }> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/subscription/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar la suscripción con Mercado Pago");
+  }
+  return body as { subscriptionId: string; approvalUrl: string };
+}
+
+export async function apiConfirmMercadoPagoSubscription(subscriptionId: string): Promise<{
+  subscriptionId: string;
+  mercadoPagoStatus: string;
+  subscriptionStatus: "active" | "inactive" | "cancelled";
+  plan: SubscriptionPlan | null;
+  billing: BillingCycle | null;
+}> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/subscription/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId, preapprovalId: subscriptionId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar la suscripción con Mercado Pago");
+  }
+  return body as {
+    subscriptionId: string;
+    mercadoPagoStatus: string;
+    subscriptionStatus: "active" | "inactive" | "cancelled";
+    plan: SubscriptionPlan | null;
+    billing: BillingCycle | null;
+  };
+}
+
+export async function apiCancelMercadoPagoSubscription(subscriptionId: string, reason?: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/subscription/cancel`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ subscriptionId, preapprovalId: subscriptionId, reason }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo cancelar la suscripción");
+  }
+  return body as { ok: true };
+}
+
+export interface PayPalExtraSessionPricing {
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}
+
+export interface MercadoPagoExtraSessionPricing {
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}
+
+export async function apiGetPayPalExtraSessionPricing(): Promise<PayPalExtraSessionPricing> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/pricing`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+  }
+  return body as PayPalExtraSessionPricing;
+}
+
+export async function apiCreatePayPalExtraSessionOrder(): Promise<{
+  orderId: string;
+  approvalUrl: string;
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+  }
+  return body as {
+    orderId: string;
+    approvalUrl: string;
+    subscriberAmount: string;
+    nonSubscriberAmount: string;
+    amount: string;
+    isSubscriber: boolean;
+    currency: string;
+  };
+}
+
+export async function apiConfirmPayPalExtraSessionOrder(orderId: string): Promise<{
+  ok: true;
+  orderId: string;
+  created?: boolean;
+  amount: string;
+  currency: string;
+  tier: "subscriber" | "standard";
+}> {
+  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ orderId, subscriptionId: orderId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+  }
+  return body as {
+    ok: true;
+    orderId: string;
+    created?: boolean;
+    amount: string;
+    currency: string;
+    tier: "subscriber" | "standard";
+  };
+}
+
+export async function apiGetMercadoPagoExtraSessionPricing(): Promise<MercadoPagoExtraSessionPricing> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/pricing`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+  }
+  return body as MercadoPagoExtraSessionPricing;
+}
+
+export async function apiCreateMercadoPagoExtraSessionPreference(): Promise<{
+  preferenceId: string;
+  checkoutUrl: string;
+  subscriberAmount: string;
+  nonSubscriberAmount: string;
+  amount: string;
+  isSubscriber: boolean;
+  currency: string;
+}> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/create`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+  }
+  return body as {
+    preferenceId: string;
+    checkoutUrl: string;
+    subscriberAmount: string;
+    nonSubscriberAmount: string;
+    amount: string;
+    isSubscriber: boolean;
+    currency: string;
+  };
+}
+
+export async function apiConfirmMercadoPagoExtraSessionPayment(paymentId: string): Promise<{
+  ok: true;
+  paymentId: string;
+  created?: boolean;
+  amount: string;
+  currency: string;
+  tier: "subscriber" | "standard";
+}> {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/confirm`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ paymentId, collectionId: paymentId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+  }
+  return body as {
+    ok: true;
+    paymentId: string;
+    created?: boolean;
+    amount: string;
+    currency: string;
+    tier: "subscriber" | "standard";
+  };
 }
 
 function authHeaders(): HeadersInit {
@@ -97,9 +392,9 @@ export async function apiUpdateProfile(data: { name?: string; email?: string }):
     headers: authHeaders(),
     body: JSON.stringify(data),
   });
-  const err = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((err as { message?: string }).message ?? "No se pudo actualizar el perfil");
-  return res.json();
+  const body = await res.json().catch(() => ({})); // ✅ parse once
+  if (!res.ok) throw new Error((body as { message?: string }).message ?? "No se pudo actualizar el perfil");
+  return body as ApiUser; 
 }
 
 export async function apiChangePassword(currentPassword: string, newPassword: string): Promise<void> {
@@ -516,6 +811,97 @@ export async function portalGetReportByType(type: string): Promise<PortalReport 
 export async function portalGetMessages(): Promise<PortalMessage[]> {
   const res = await fetch(`${API_BASE}/portal/messages`, { headers: authHeaders() });
   if (!res.ok) return [];
+  return res.json();
+}
+
+// Generic API client for component requests
+// ✅ FIXED - properly merges headers with auth token
+export const api = {
+  async get(url: string, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'GET',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data };
+  },
+
+  async post(url: string, data?: any, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'POST',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const response = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data: response };
+  },
+
+  async patch(url: string, data?: any, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'PATCH',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const response = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data: response };
+  },
+
+  async delete(url: string, options?: RequestInit) {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'DELETE',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...options?.headers,
+      },
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const response = await res.json();
+    // Wrap response to match expected {data: ...} format
+    return { data: response };
+  },
+};
+
+// Astro API functions
+export async function astroGetUserNatalChart(): Promise<any> {
+  const token = getToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch(`${API_BASE}/astro/natal-chart/user`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch natal chart');
+  return res.json();
+}
+
+export async function astroGetUserNumerology(): Promise<any> {
+  const token = getToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch(`${API_BASE}/astro/numerology/user`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch numerology');
   return res.json();
 }
 

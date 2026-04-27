@@ -2,18 +2,25 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, Hash } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { portalGetReportByType } from "@/lib/api";
+import { astroGetUserNumerology } from "@/lib/api";
 import EmptyState from "@/components/EmptyState";
 
 const Numerology = () => {
-  const [report, setReport] = useState<{ id: string; type: string; title: string; content: string | null } | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    portalGetReportByType("numerology").then((r) => {
-      setReport(r ?? null);
-      setLoading(false);
-    });
+    astroGetUserNumerology()
+      .then((response) => {
+        setData(response.data);
+      })
+      .catch((err) => {
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {
@@ -24,29 +31,15 @@ const Numerology = () => {
     );
   }
 
-  if (!report) {
+  if (error || !data) {
     return (
       <div className="max-w-6xl mx-auto">
         <Link to="/portal/reports" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
           <ArrowLeft className="w-4 h-4" /> Volver a reportes
         </Link>
-        <EmptyState icon={Hash} message="No hay numerología." />
+        <EmptyState icon={Hash} message={error || "No hay numerología."} />
       </div>
     );
-  }
-
-  let numbers: { number: string; label: string; desc: string }[] = [];
-  let interpretations: { id: string; title: string; content: string }[] = [];
-  if (report.content) {
-    try {
-      const parsed = JSON.parse(report.content);
-      if (parsed.numbers) numbers = parsed.numbers;
-      if (parsed.interpretations) interpretations = parsed.interpretations;
-      if (parsed.sections) interpretations = parsed.sections;
-      if (!numbers.length && !interpretations.length) interpretations = [{ id: "main", title: "Interpretación", content: report.content }];
-    } catch {
-      interpretations = [{ id: "main", title: "Interpretación completa", content: report.content }];
-    }
   }
 
   return (
@@ -55,33 +48,47 @@ const Numerology = () => {
         <ArrowLeft className="w-4 h-4" /> Volver a reportes
       </Link>
 
-      {numbers.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {numbers.map((n, i) => (
-            <motion.div key={n.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }} className="glass-card rounded-2xl p-6 premium-shadow text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-3">
-                <span className="font-serif text-3xl text-primary">{n.number}</span>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-6">
+        {/* Life Path Number */}
+        {data.lifePathNumber && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-8 premium-shadow">
+            <div className="text-center">
+              <p className="text-xs tracking-[0.3em] uppercase text-primary mb-3">Tu número personal</p>
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/30 flex items-center justify-center mx-auto mb-4">
+                <span className="font-serif text-5xl text-primary">{data.lifePathNumber}</span>
               </div>
-              <p className="text-xs tracking-widest uppercase text-primary mb-1">{n.label}</p>
-              <p className="text-muted-foreground text-xs">{n.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      )}
+              <h3 className="font-serif text-2xl text-foreground mb-2">Número de Camino de Vida</h3>
+              <p className="text-muted-foreground max-w-xl mx-auto">{data.interpretation || "Tu número de camino de vida representa tu propósito y misión en la vida."}</p>
+            </div>
+          </motion.div>
+        )}
 
-      {interpretations.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="glass-card rounded-2xl p-6 premium-shadow">
-          <h3 className="font-serif text-xl text-foreground mb-4">Interpretación Completa</h3>
-          <div className="space-y-4">
-            {interpretations.map((s) => (
-              <div key={s.id} className="border-b border-border/30 last:border-0 pb-4 last:pb-0">
-                <p className="font-serif text-foreground mb-2">{s.title}</p>
-                <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-wrap">{s.content}</p>
+        {/* Additional Numbers */}
+        {data.destinyNumber && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid md:grid-cols-2 gap-6">
+            <div className="glass-card rounded-2xl p-6 premium-shadow">
+              <p className="text-xs tracking-widest uppercase text-primary mb-2">Número del Destino</p>
+              <p className="text-4xl font-serif text-primary font-bold mb-2">{data.destinyNumber}</p>
+              <p className="text-muted-foreground text-sm">Tu potencial y lo que el universo te propone.</p>
+            </div>
+            
+            {data.soulUrgeNumber && (
+              <div className="glass-card rounded-2xl p-6 premium-shadow">
+                <p className="text-xs tracking-widest uppercase text-primary mb-2">Número del Alma</p>
+                <p className="text-4xl font-serif text-primary font-bold mb-2">{data.soulUrgeNumber}</p>
+                <p className="text-muted-foreground text-sm">Lo que tu alma desea expresar.</p>
               </div>
-            ))}
-          </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Birth Date Info */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="glass-card rounded-2xl p-6 premium-shadow">
+          <p className="text-xs tracking-widest uppercase text-muted-foreground mb-2">Información Base</p>
+          <p className="text-foreground"><strong>Fecha de Nacimiento:</strong> {data.birthDate}</p>
+          {data.name && <p className="text-foreground mt-1"><strong>Nombre:</strong> {data.name}</p>}
         </motion.div>
-      )}
+      </motion.div>
     </div>
   );
 };

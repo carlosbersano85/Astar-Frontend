@@ -1,7 +1,15 @@
 import { motion } from "framer-motion";
 import { CreditCard, Calendar, Receipt, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { portalGetProfile, portalGetMyOrders, type PortalProfile, type PortalOrder } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import {
+  apiCancelMercadoPagoSubscription,
+  apiCancelPayPalSubscription,
+  portalGetMyOrders,
+  portalGetProfile,
+  type PortalOrder,
+  type PortalProfile,
+} from "@/lib/api";
 import EmptyState from "@/components/EmptyState";
 
 function formatOrderDate(iso: string) {
@@ -35,7 +43,14 @@ function planLabelFromType(type: string) {
 function nextRenewalFromLastOrder(createdAt: string, type: string) {
   try {
     const d = new Date(createdAt);
-    if (type?.toLowerCase().includes("month") || type?.toLowerCase() === "monthly" || type?.toLowerCase() === "mensual") {
+    if (
+      type?.toLowerCase().includes("month") ||
+      type?.toLowerCase() === "monthly" ||
+      type?.toLowerCase() === "mensual" ||
+      type?.toLowerCase() === "annual" ||
+      type?.toLowerCase() === "year" ||
+      type?.toLowerCase() === "anual"
+    ) {
       d.setMonth(d.getMonth() + 1);
     } else {
       d.setFullYear(d.getFullYear() + 1);
@@ -47,9 +62,11 @@ function nextRenewalFromLastOrder(createdAt: string, type: string) {
 }
 
 const Subscription = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<PortalProfile | null>(null);
   const [orders, setOrders] = useState<PortalOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     Promise.all([portalGetProfile(), portalGetMyOrders()]).then(([p, o]) => {
@@ -58,6 +75,42 @@ const Subscription = () => {
       setLoading(false);
     });
   }, []);
+
+  const handleCancelSubscription = async () => {
+    if (cancelling || status !== "active") return;
+    const confirm = window.confirm("¿Seguro que quieres cancelar tu suscripción?");
+    if (!confirm) return;
+
+    try {
+      setCancelling(true);
+      const latestMethod = (orders[0]?.method ?? "").toLowerCase();
+      if (latestMethod === "mercado_pago") {
+        const mpSubscriptionId = localStorage.getItem("astar_mp_subscription_id") ?? "";
+        if (!mpSubscriptionId) {
+          throw new Error("No encontramos el identificador de suscripción de Mercado Pago.");
+        }
+        await apiCancelMercadoPagoSubscription(mpSubscriptionId);
+      } else {
+        await apiCancelPayPalSubscription();
+      }
+      const updatedProfile = await portalGetProfile();
+      setProfile(updatedProfile);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo cancelar la suscripción.";
+      window.alert(message);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleUpdatePaymentMethod = () => {
+    const proceed = window.confirm(
+      "Te llevaremos al checkout para actualizar tu método de pago. ¿Deseas continuar?",
+    );
+    if (!proceed) return;
+
+    navigate("/subscribe");
+  };
 
   if (loading) {
     return (
@@ -99,11 +152,18 @@ const Subscription = () => {
           </div>
         )}
         <div className="flex gap-3 flex-wrap">
-          <button className="px-6 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors">
+          <button
+            onClick={handleUpdatePaymentMethod}
+            className="px-6 py-2.5 rounded-xl border border-border/50 text-foreground text-sm hover:bg-accent/50 transition-colors"
+          >
             Actualizar Método de Pago
           </button>
-          <button className="px-6 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors">
-            Cancelar Suscripción
+          <button
+            onClick={handleCancelSubscription}
+            disabled={status !== "active" || cancelling}
+            className="px-6 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {cancelling ? "Cancelando..." : "Cancelar Suscripción"}
           </button>
         </div>
       </motion.div>

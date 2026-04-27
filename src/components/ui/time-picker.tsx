@@ -20,7 +20,7 @@ function to12h(time24: string) {
 }
 
 function to24h(hour: string, minute: string, period: string) {
-  let h = parseInt(hour);
+  let h = parseInt(hour, 10);
   if (period === "AM" && h === 12) h = 0;
   else if (period === "PM" && h !== 12) h += 12;
   return `${String(h).padStart(2, "0")}:${minute}`;
@@ -52,6 +52,7 @@ const ScrollColumn = ({
       {items.map((item) => (
         <button
           key={item}
+          type="button"
           onClick={() => onSelect(item)}
           className={cn(
             "snap-center px-4 py-2.5 text-sm font-medium transition-all shrink-0 rounded-lg mx-1",
@@ -68,10 +69,17 @@ const ScrollColumn = ({
 };
 
 const TimePicker = ({ value, onChange, className }: TimePickerProps) => {
-  const parsed = to12h(value);
+  const parsed = to12h(value || "00:00");
   const [hour, setHour] = useState(parsed.hour);
   const [minute, setMinute] = useState(parsed.minute);
   const [period, setPeriod] = useState(parsed.period);
+
+  useEffect(() => {
+    const next = to12h(value || "00:00");
+    setHour(next.hour);
+    setMinute(next.minute);
+    setPeriod(next.period);
+  }, [value]);
 
   const handleChange = (h: string, m: string, p: string) => {
     onChange(to24h(h, m, p));
@@ -81,6 +89,7 @@ const TimePicker = ({ value, onChange, className }: TimePickerProps) => {
     <Popover>
       <PopoverTrigger asChild>
         <button
+          type="button"
           className={cn(
             "w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 text-sm text-left flex items-center justify-between transition-colors focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 text-foreground",
             className
@@ -98,18 +107,28 @@ const TimePicker = ({ value, onChange, className }: TimePickerProps) => {
           <ScrollColumn
             items={hours12}
             selected={hour}
-            onSelect={(v) => { setHour(v); handleChange(v, minute, period); }}
+            onSelect={(v) => {
+              setHour(v);
+              handleChange(v, minute, period);
+            }}
           />
           <ScrollColumn
             items={minutes}
             selected={minute}
-            onSelect={(v) => { setMinute(v); handleChange(hour, v, period); }}
+            onSelect={(v) => {
+              setMinute(v);
+              handleChange(hour, v, period);
+            }}
           />
           <div className="flex flex-col justify-center gap-1 p-2">
             {["AM", "PM"].map((p) => (
               <button
                 key={p}
-                onClick={() => { setPeriod(p); handleChange(hour, minute, p); }}
+                type="button"
+                onClick={() => {
+                  setPeriod(p);
+                  handleChange(hour, minute, p);
+                }}
                 className={cn(
                   "px-3 py-2 text-xs font-semibold rounded-lg transition-all",
                   period === p

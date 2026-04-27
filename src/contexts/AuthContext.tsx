@@ -109,6 +109,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }): Promise<{ ok: true } | { ok: false; error: string }> => {
     try {
       const { user: apiUser, access_token } = await apiRegister(data);
+      if (!apiUser || !access_token) {
+        throw new Error("Registration response was empty or malformed.");
+      }
       setToken(access_token);
       setUser(mapApiUser(apiUser));
       return { ok: true };

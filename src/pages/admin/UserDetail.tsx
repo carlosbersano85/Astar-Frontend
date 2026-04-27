@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, User, Calendar, CreditCard, Power, Loader2 } from "lucide-react";
+import { ArrowLeft, User, Calendar, CreditCard, Power, Loader2, ShieldCheck } from "lucide-react";
 import { adminGetUser, adminUpdateUser, type AdminUserDetail } from "@/lib/api";
 import EmptyState from "@/components/EmptyState";
 
@@ -18,6 +18,7 @@ const AdminUserDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [granting, setGranting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -50,6 +51,28 @@ const AdminUserDetail = () => {
       setError(e instanceof Error ? e.message : "Error al actualizar");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleGrantFullAccess = async () => {
+    if (!user || user.role === "admin") return;
+
+    const alreadyGranted = user.isActive && user.subscriptionStatus === "active";
+    if (alreadyGranted) return;
+
+    setGranting(true);
+    try {
+      if (!user.isActive) {
+        await adminUpdateUser(user.id, { isActive: true });
+      }
+      if (user.subscriptionStatus !== "active") {
+        await adminUpdateUser(user.id, { subscriptionStatus: "active" });
+      }
+      setUser((prev) => (prev ? { ...prev, isActive: true, subscriptionStatus: "active" } : null));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al conceder acceso completo");
+    } finally {
+      setGranting(false);
     }
   };
 
@@ -96,6 +119,7 @@ const AdminUserDetail = () => {
 
   const accountActive = user.isActive;
   const isClient = user.role === "client";
+  const hasFullAccess = accountActive && user.subscriptionStatus === "active";
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -113,8 +137,16 @@ const AdminUserDetail = () => {
           className="flex items-center justify-end mb-8 flex-wrap gap-4"
         >
           <button
+            onClick={handleGrantFullAccess}
+            disabled={granting || hasFullAccess || updating}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shimmer-gold text-primary-foreground disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {granting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            {hasFullAccess ? "Acceso completo concedido" : "Conceder acceso completo"}
+          </button>
+          <button
             onClick={handleToggleAccountActive}
-            disabled={updating}
+            disabled={updating || granting}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60 ${
               accountActive
                 ? "border border-destructive/30 text-destructive hover:bg-destructive/10"
