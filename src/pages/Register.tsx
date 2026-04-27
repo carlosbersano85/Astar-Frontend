@@ -11,6 +11,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import TimePicker from "../components/ui/time-picker";
 import { cn } from "@/lib/utils";
+import { PrivacyPolicyModal } from "@/components/legal/LegalDocumentsModal";
+import { TermsModal } from "@/components/legal/LegalDocumentsModal";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -185,6 +187,19 @@ const Register = () => {
             ¿Ya tienes cuenta?{" "}
             <Link to="/login" className="text-primary hover:text-primary/80 transition-colors font-medium">Inicia sesión</Link>
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs text-muted-foreground">
+            <PrivacyPolicyModal>
+              <button className="text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline">
+                Política de Privacidad
+              </button>
+            </PrivacyPolicyModal>
+            <span>·</span>
+            <TermsModal>
+              <button className="text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline">
+                Términos y Condiciones
+              </button>
+            </TermsModal>
+          </div>
         </div>
       </motion.div>
     </div>

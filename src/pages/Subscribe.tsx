@@ -9,6 +9,8 @@ import {
   apiCreatePayPalSubscription,
   type SubscriptionPlan,
 } from "@/lib/api";
+import { PrivacyPolicyModal } from "@/components/legal/LegalDocumentsModal";
+import { TermsModal } from "@/components/legal/LegalDocumentsModal";
 
 const plans = [
   {
@@ -224,6 +226,20 @@ const Subscribe = () => {
         <p className="text-center text-xs text-muted-foreground mb-8">
           Cancela cuando quieras. Sin compromisos.
         </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground mb-8">
+          <PrivacyPolicyModal>
+            <button className="text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline">
+              Política de Privacidad
+            </button>
+          </PrivacyPolicyModal>
+          <span>·</span>
+          <TermsModal>
+            <button className="text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline">
+              Términos y Condiciones
+            </button>
+          </TermsModal>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           ¿Aún no estás seguro?{" "}

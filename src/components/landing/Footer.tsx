@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
+import { PrivacyPolicyModal } from "@/components/legal/LegalDocumentsModal";
+import { TermsModal } from "@/components/legal/LegalDocumentsModal";
 
 const Footer = () => {
   const { resolvedTheme } = useTheme();
@@ -44,7 +46,27 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-border/30 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Astar. Todos los derechos reservados.</p>
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <span>© {new Date().getFullYear()} Astar. Todos los derechos reservados.</span>
+            <span className="hidden md:inline">|</span>
+            <PrivacyPolicyModal>
+              <span className="cursor-pointer text-muted-foreground hover:text-[#ffe082] transition-colors underline-offset-2 hover:underline px-1">
+                PRIVACY
+              </span>
+            </PrivacyPolicyModal>
+            <span className="text-muted-foreground px-1">·</span>
+            <TermsModal>
+              <span className="cursor-pointer text-muted-foreground hover:text-[#ffe082] transition-colors underline-offset-2 hover:underline px-1">
+                TERMS
+              </span>
+            </TermsModal>
+            <span className="text-muted-foreground px-1">·</span>
+            <a href="#" className="text-muted-foreground hover:text-[#ffe082] transition-colors underline-offset-2 hover:underline px-1">CONTACT</a>
+            <span className="text-muted-foreground px-1">·</span>
+            <a href="#" className="text-muted-foreground hover:text-[#ffe082] transition-colors underline-offset-2 hover:underline px-1">INSTAGRAM</a>
+            <span className="text-muted-foreground px-1">·</span>
+            <a href="#" className="text-muted-foreground hover:text-[#ffe082] transition-colors underline-offset-2 hover:underline px-1">ASTARPORTAL.COM</a>
+          </div>
           <p className="text-xs text-muted-foreground">Pagos seguros con Stripe & Mercado Pago</p>
         </div>
       </div>
