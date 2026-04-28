@@ -12,65 +12,50 @@ import {
 import { PrivacyPolicyModal } from "@/components/legal/LegalDocumentsModal";
 import { TermsModal } from "@/components/legal/LegalDocumentsModal";
 
+// Reduced plans: Free and Luminary (maps to backend `portal` plan)
 const plans = [
   {
-    name: "Essentials",
+    name: "Free",
     icon: Shield,
-    price: { monthly: 19, annual: 15 },
-    tagline: "Ideal para explorar tu mapa simbólico",
+    price: { monthly: 0 },
+    tagline: "Acceso gratuito al portal",
     highlighted: false,
     features: [
-      "Carta natal completa (acceso permanente)",
-      "Reporte de numerología personal",
-      "Reportes simbólicos base",
-      "Acceso al portal con historial completo",
-      "Soporte comunitario",
+      "Carta natal de inicio",
+      "Acceso al portal personal",
+      "Chatbot de Astar (versión básica)",
     ],
   },
   {
-    name: "Portal",
+    name: "Luminary",
     icon: Star,
-    price: { monthly: 39, annual: 29 },
-    tagline: "Guía completa con acompañamiento humano",
+    // Luminary corresponds to backend `portal` plan
+    price: { monthly: 29 },
+    tagline: "Todo el sistema y respuesta humana mensual",
     highlighted: true,
     features: [
-      "Todo de Essentials, más:",
-      "Revolución solar del año en curso",
-      "Mensaje mensual personalizado",
-      "1 pregunta mensual con respuesta humana",
-      "Soporte prioritario por email",
-      "Acceso anticipado a nuevas funciones",
-    ],
-  },
-  {
-    name: "Depth",
-    icon: Crown,
-    price: { monthly: 79, annual: 59 },
-    tagline: "Máxima profundidad con soporte dedicado",
-    highlighted: false,
-    features: [
-      "Todo de Portal, más:",
-      "3 preguntas mensuales con respuesta humana",
-      "1 sesión privada por mes",
-      "Reportes simbólicos extendidos",
-      "Guía dedicada",
-      "Agendamiento de sesiones personalizado",
+      "Todo lo de Free, más:",
+      "Carta natal completa",
+      "Numerología completa",
+      "1 respuesta humana de Carlos por mes",
+      "Precio especial en servicios extras",
     ],
   },
 ];
 
 const Subscribe = () => {
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  // single billing cycle: monthly only
+  const [billing] = useState<"monthly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
   const [loadingProvider, setLoadingProvider] = useState<"paypal" | "mercado_pago" | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // map frontend plan names to backend plan keys (Luminary -> portal)
   const planKeyByName: Record<string, SubscriptionPlan> = {
-    Essentials: "essentials",
-    Portal: "portal",
-    Depth: "depth",
+    Free: "essentials",
+    Luminary: "portal",
   };
 
   const handleSubscribe = async (planName: string, provider: "paypal" | "mercado_pago") => {
@@ -116,34 +101,7 @@ const Subscribe = () => {
           <p className="text-muted-foreground">Tu acompañamiento astrológico personalizado, cada mes.</p>
         </motion.div>
 
-        {/* Billing toggle */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center justify-center gap-1 mb-16"
-        >
-          <button
-            onClick={() => setBilling("monthly")}
-            className={`px-6 py-2.5 rounded-full text-sm font-medium tracking-wide transition-all duration-300 ${
-              billing === "monthly"
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "border border-border/50 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Pago Mensual
-          </button>
-          <button
-            onClick={() => setBilling("annual")}
-            className={`px-6 py-2.5 rounded-full text-sm font-medium tracking-wide transition-all duration-300 ${
-              billing === "annual"
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "border border-border/50 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Pago Anual
-          </button>
-        </motion.div>
+        {/* Billing is monthly only (annual removed) */}
 
         {/* Plans grid */}
         <div className="grid md:grid-cols-3 gap-6 mb-10">
@@ -169,13 +127,13 @@ const Subscribe = () => {
               {/* Price */}
               <div className="mb-2">
                 <motion.span
-                  key={`${plan.name}-${billing}`}
+                  key={`${plan.name}`}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="font-sans text-5xl font-light text-gradient-gold inline-block tabular-nums"
+                  className="font-numeric text-5xl font-light text-gradient-gold inline-block tabular-nums"
                 >
-                  ${plan.price[billing]}
+                  ${plan.price.monthly}
                 </motion.span>
                 <span className="text-muted-foreground text-sm ml-2">USD / mes</span>
               </div>

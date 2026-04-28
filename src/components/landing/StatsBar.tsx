@@ -16,7 +16,7 @@ const CountItem = ({ stat, index }: { stat: typeof stats[0]; index: number }) =>
       transition={{ duration: 0.5, delay: index * 0.1, type: "spring", stiffness: 100 }}
       className="text-center group"
     >
-      <p className="font-sans text-4xl md:text-5xl font-light text-gradient-gold mb-2 group-hover:scale-110 transition-transform duration-300 tabular-nums">
+      <p className="font-numeric text-4xl md:text-5xl font-light text-gradient-gold mb-2 group-hover:scale-110 transition-transform duration-300 tabular-nums">
         {stat.value}
       </p>
       <p className="text-sm text-muted-foreground tracking-wide">{stat.label}</p>

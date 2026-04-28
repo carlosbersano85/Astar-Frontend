@@ -140,7 +140,7 @@ const Subscription = () => {
             <p className="text-2xl text-foreground">
               {planLabel}
               {planAmount != null && (
-                <span className="tabular-nums font-semibold ml-1">— {planAmount}</span>
+                <span className="font-numeric tabular-nums font-semibold ml-1">— {planAmount}</span>
               )}
             </p>
           </div>
@@ -180,7 +180,7 @@ const Subscription = () => {
             {orders.map((o) => (
               <div key={o.id} className="flex items-center justify-between text-sm py-3 border-b border-border/30 last:border-0">
                 <span className="text-muted-foreground">{formatOrderDate(o.createdAt)}</span>
-                <span className="text-foreground tabular-nums">{formatAmount(o.amount)}</span>
+                <span className="font-numeric text-foreground tabular-nums">{formatAmount(o.amount)}</span>
                 <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">Pagado</span>
               </div>
             ))}

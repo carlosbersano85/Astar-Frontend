@@ -32,8 +32,7 @@ const Footer = () => {
             <ul className="space-y-2.5">
               <li><Link to="/blog" className="text-sm text-muted-foreground hover:text-primary transition-colors">Blog</Link></li>
               <li><Link to="/manifesto" className="text-sm text-muted-foreground hover:text-primary transition-colors">Manifiesto</Link></li>
-              <li><Link to="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">Sobre Nosotros</Link></li>
-              <li><a href="/5MANUAL%20DE%20MARCA/manual%20grafico1.pdf" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">Manual de marca (PDF)</a></li>
+              <li><Link to="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">Sobre Mi</Link></li>
             </ul>
           </div>
           <div>

@@ -72,7 +72,7 @@ const PortalDashboard = () => {
               </p>
               {subscriptionActive && <span className="w-2 h-2 rounded-full bg-primary animate-pulse-glow" />}
             </div>
-            <p className="text-foreground font-medium">Plan Mensual — $29 USD</p>
+            <p className="font-numeric text-foreground font-medium">Plan Mensual — $29 USD</p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
               <Calendar className="w-3.5 h-3.5" />
               Gestiona tu suscripción para ver renovación
