@@ -217,7 +217,7 @@ const Purchase = () => {
           <div className="mt-6 rounded-xl border border-border/50 bg-background/30 p-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Tu precio ahora</p>
-              <p className="text-xl font-semibold text-foreground mt-1">{appliedPrice}</p>
+              <p className="font-numeric text-xl font-semibold text-foreground mt-1">{appliedPrice}</p>
             </div>
             <div className="flex flex-col items-end gap-3">
               <div className="flex items-center gap-2 text-xs">

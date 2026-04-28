@@ -262,6 +262,8 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -270,8 +272,25 @@
 }
 
 @layer utilities {
+  .font-serif {
+    font-family: var(--font-serif), var(--font-mono), ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    font-synthesis: none;
+  }
+
   .font-serif-display {
-    font-family: var(--font-serif);
+    font-family: var(--font-serif), var(--font-mono), ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    font-synthesis: none;
+  }
+
+  .font-numeric {
+    font-family: var(--font-mono);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    letter-spacing: 0;
   }
 
   .text-gradient-gold {

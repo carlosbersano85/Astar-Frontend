@@ -55,7 +55,7 @@ const Numerology = () => {
             <div className="text-center">
               <p className="text-xs tracking-[0.3em] uppercase text-primary mb-3">Tu número personal</p>
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/30 flex items-center justify-center mx-auto mb-4">
-                <span className="font-serif text-5xl text-primary">{data.lifePathNumber}</span>
+                <span className="font-number text-5xl text-primary">{data.lifePathNumber}</span>
               </div>
               <h3 className="font-serif text-2xl text-foreground mb-2">Número de Camino de Vida</h3>
               <p className="text-muted-foreground max-w-xl mx-auto">{data.interpretation || "Tu número de camino de vida representa tu propósito y misión en la vida."}</p>

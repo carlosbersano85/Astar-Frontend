@@ -188,7 +188,7 @@ const PricingSection = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="font-sans text-5xl font-light text-gradient-gold inline-block tabular-nums"
+                  className="font-numeric text-5xl font-light text-gradient-gold inline-block tabular-nums"
                 >
                   ${plan.price[billing]}
                 </motion.span>

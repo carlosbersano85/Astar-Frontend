@@ -8,7 +8,6 @@ import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
   { to: "/", label: "Preview Carta", hash: "#preview-carta" },
-  { to: "/about", label: "Sobre Nosotros" },
   { to: "/manifesto", label: "Manifiesto" },
   { to: "/blog", label: "Blog" },
   { to: "/how-it-works", label: "Cómo Funciona" },
