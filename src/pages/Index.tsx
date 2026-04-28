@@ -53,10 +53,9 @@ const Index = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navLinks = [
-    { to: "/portal-preview", label: "Portal" },
+    { to: "/", label: "Carlos", hash: "#carlos" },
     { to: "/subscribe", label: "Planes" },
     { to: "/", label: "Servicios", hash: "#servicios" },
-    { to: "/", label: "SEE HOW IT WORKS", hash: "#video" },
   ] as const;
 
   // Stars canvas animation
@@ -176,7 +175,7 @@ const Index = () => {
                 </Link>
               )
             ))}
-            <Link to="/register" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase transition-all hover:opacity-90" style={{ background: colors.goldBright, color: "#080010" }}>
+            <Link to="/portal" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase transition-all hover:opacity-90" style={{ background: colors.goldBright, color: "#080010" }}>
               <span style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>♦</span>
               Entrar →
             </Link>
@@ -253,12 +252,12 @@ const Index = () => {
           <p className="font-serif text-lg md:text-xl italic text-[#c39ed6] max-w-[540px] mx-auto mt-7 mb-[52px] leading-relaxed">Porque entender lo que te pasa cambia todo lo que decidís después.</p>
           
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link to="/subscribe" className="inline-flex items-center gap-2.5 px-10 py-4 rounded-full text-xs font-bold tracking-[2px] uppercase transition-all hover:opacity-90 hover:translate-y-[-2px]" style={{ background: colors.goldBright, color: "#080010", boxShadow: "0 20px 60px rgba(232,196,106,0.3)" }}>
+            <Link to="/register" className="inline-flex items-center gap-2.5 px-10 py-4 rounded-full text-xs font-bold tracking-[2px] uppercase transition-all hover:opacity-90 hover:translate-y-[-2px]" style={{ background: colors.goldBright, color: "#080010", boxShadow: "0 20px 60px rgba(232,196,106,0.3)" }}>
               Acceder al portal →
             </Link>
-            <Link to="/portal-preview" className="inline-flex items-center gap-2 px-10 py-4 rounded-full text-xs font-semibold tracking-[2px] uppercase border transition-all hover:border-[#bda76c] hover:text-[#bda76c]" style={{ borderColor: "rgba(205,182,168,0.3)", color: "#f0e8d8" }}>
+            <a href="#video" className="inline-flex items-center gap-2 px-10 py-4 rounded-full text-xs font-semibold tracking-[2px] uppercase border transition-all hover:border-[#bda76c] hover:text-[#bda76c]" style={{ borderColor: "rgba(205,182,168,0.3)", color: "#f0e8d8" }}>
               Ver cómo funciona
-            </Link>
+            </a>
           </div>
         </motion.div>
         
@@ -311,7 +310,7 @@ const Index = () => {
       </section>
 
       {/* MÓDULOS */}
-      <section className="relative z-10 py-24" id="video">
+      <section className="relative z-10 py-24">
         <div className="max-w-[1200px] mx-auto px-[60px]">
           <div className="fade-in mb-16">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7" style={{ background: "rgba(87,55,89,0.3)", border: "1px solid rgba(189,167,108,0.25)" }}>
@@ -407,7 +406,7 @@ const Index = () => {
       </section>
 
       {/* VIDEO */}
-      <section className="relative z-10 py-24">
+      <section className="relative z-10 py-24"  id="video">
         <div className="max-w-[1200px] mx-auto px-[60px]">
           <div className="fade-in">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7" style={{ background: "rgba(87,55,89,0.3)", border: "1px solid rgba(189,167,108,0.25)" }}>
@@ -415,7 +414,7 @@ const Index = () => {
               <span className="text-[9px] font-bold tracking-[3px] uppercase" style={{ color: colors.goldLight }}>Mirá el portal por dentro</span>
             </div>
             <h2 className="font-serif text-4xl md:text-6xl font-black leading-none tracking-[-1px] mb-5">
-              Antes de entrar,<br /><span style={{ color: colors.goldBright, fontStyle: "italic" }}>conoci qué hay.</span>
+              Antes de entrar,<br /><span style={{ color: colors.goldBright, fontStyle: "italic" }}>conoce qué hay.</span>
             </h2>
           </div>
           <div className="mt-14 rounded-2xl overflow-hidden border" style={{ background: "rgba(20,5,35,0.9)", borderColor: "rgba(87,55,89,0.5)", aspectRatio: "16/9" }}>
@@ -476,7 +475,7 @@ const Index = () => {
       </div>
 
       {/* CARLOS */}
-      <section className="relative z-10 py-24" style={{ borderTop: "1px solid rgba(189,167,108,0.1)", borderBottom: "1px solid rgba(189,167,108,0.1)", background: "rgba(87,55,89,0.06)" }}>
+      <section className="relative z-10 py-24" id="carlos" style={{ borderTop: "1px solid rgba(189,167,108,0.1)", borderBottom: "1px solid rgba(189,167,108,0.1)", background: "rgba(87,55,89,0.06)" }}>
         <div className="max-w-[1200px] mx-auto px-[60px]">
           <div className="grid md:grid-cols-2 gap-20 items-center fade-in">
             <div className="relative">

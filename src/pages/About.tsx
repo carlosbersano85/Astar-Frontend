@@ -24,7 +24,7 @@ const About = () => {
     <section className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <h1 className="font-serif text-5xl md:text-6xl text-gradient-gold font-semibold mb-4 text-center">Sobre Nosotros</h1>
+          <h1 className="font-serif text-5xl md:text-6xl text-gradient-gold font-semibold mb-4 text-center">Sobre Mi</h1>
           <p className="text-center text-muted-foreground mb-16 max-w-xl mx-auto">
             Conoce la filosofía detrás de Astar y cómo la lectura simbólica puede transformar tu vida.
           </p>

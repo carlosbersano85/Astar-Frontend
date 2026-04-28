@@ -17,6 +17,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 // Lazy-loaded pages
 const Index = lazy(() => import("@/pages/Index"));
 const Manifesto = lazy(() => import("@/pages/Manifesto"));
+const About = lazy(() => import("@/pages/About"));
 const Blog = lazy(() => import("@/pages/Blog"));
 const BlogArticle = lazy(() => import("@/pages/BlogArticle"));
 const PortalPreviewPage = lazy(() => import("@/pages/PortalPreviewPage"));
@@ -73,7 +74,8 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route element={<PublicLayout />}>
                   <Route path="/manifesto" element={<Manifesto />} />
-                  {/* About page removed per brand guidelines */}
+                  <Route path="/about" element={<About />} />
+                  {/* About page re-added */}
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogArticle />} />
                   <Route path="/portal-preview" element={<PortalPreviewPage />} />
