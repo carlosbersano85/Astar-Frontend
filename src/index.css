@@ -160,9 +160,9 @@
 
     --radius: 0.5rem;
 
-    --gold: 32 60% 40%;
-    --gold-light: 34 48% 52%;
-    --gold-dark: 28 72% 28%;
+    --gold: 45 85% 60%;
+    --gold-light: 45 90% 75%;
+    --gold-dark: 40 80% 45%;
     --deep: 30 10% 94%;
     --celestial: 225 20% 65%;
 
@@ -206,7 +206,7 @@
     --popover-foreground: 210 40% 98%;
 
     --primary: 198 93% 59%;
-    --primary-foreground: 204 80% 15%;
+    --primary-foreground: 222 47% 11%;
 
     --secondary: 212 26% 83%;
     --secondary-foreground: 228 84% 4%;
@@ -388,6 +388,8 @@
 
 /* Shimmer effect for CTAs */
 .shimmer-gold {
+  color: hsl(var(--gold-dark));
+  text-shadow: 0 1px 1px hsl(0 0% 100% / 0.3);
   background: linear-gradient(
     110deg,
     hsl(var(--gold)) 0%,

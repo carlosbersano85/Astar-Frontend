@@ -15,6 +15,7 @@ import PortalLayout from "@/layouts/PortalLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 
 // Lazy-loaded pages
+const Homepage = lazy(() => import("@/pages/Homepage"));
 const Index = lazy(() => import("@/pages/Index"));
 const Manifesto = lazy(() => import("@/pages/Manifesto"));
 const About = lazy(() => import("@/pages/About"));
@@ -70,8 +71,8 @@ const App = () => (
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
-                {/* Public pages - Landing has its own layout */}
-                <Route path="/" element={<Index />} />
+                {/* Public pages - Homepage */}
+                <Route path="/" element={<Homepage />} />
                 <Route element={<PublicLayout />}>
                   <Route path="/manifesto" element={<Manifesto />} />
                   <Route path="/about" element={<About />} />
