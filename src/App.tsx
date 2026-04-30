@@ -75,6 +75,7 @@ const App = () => (
                 <Route element={<PublicLayout />}>
                   <Route path="/manifesto" element={<Manifesto />} />
                   <Route path="/about" element={<About />} />
+                  {/* About page re-added */}
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogArticle />} />
                   <Route path="/portal-preview" element={<PortalPreviewPage />} />

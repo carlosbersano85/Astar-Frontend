@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import ServiceCards from "@/components/landing/ServiceCards";
 import { motion } from "framer-motion";
 import { PrivacyPolicyModal } from "@/components/legal/LegalDocumentsModal";
 import { TermsModal } from "@/components/legal/LegalDocumentsModal";
+import { Menu, X } from "lucide-react";
 
 // Brand colors
 const colors = {
@@ -48,6 +50,13 @@ const frases = [
 
 const Index = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const navLinks = [
+    { to: "/", label: "Carlos", hash: "#carlos" },
+    { to: "/subscribe", label: "Planes" },
+    { to: "/", label: "Servicios", hash: "#servicios" },
+  ] as const;
 
   // Stars canvas animation
   useEffect(() => {
@@ -137,26 +146,96 @@ const Index = () => {
       <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" id="stars" />
 
       {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-[60px] py-5 transition-all duration-300" style={{ background: "transparent" }}>
-        <div className="flex flex-col gap-0.5">
-          <span className="font-serif text-2xl font-black tracking-[4px]">ASTAR</span>
-          <span className="text-[9px] font-normal tracking-[4px] uppercase" style={{ color: colors.goldLight }}>Astrología · Numerología · Tarot</span>
-        </div>
-        <ul className="flex items-center gap-10 list-none">
-          <li><Link to="/portal-preview" className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: colors.arena }}>El Portal</Link></li>
-          <li><Link to="/about" className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: colors.arena }}>Carlos</Link></li>
-          <li><Link to="/subscribe" className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: colors.arena }}>Planes</Link></li>
-          <li>
-            <Link to="/register" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase" style={{ background: colors.goldBright, color: "#080010" }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 md:px-[60px] py-4 md:py-5 transition-all duration-300" style={{ background: "transparent" }}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="font-serif text-xl sm:text-2xl font-black tracking-[3px] sm:tracking-[4px] leading-none">ASTAR</span>
+            <span className="hidden sm:block text-[9px] font-normal tracking-[4px] uppercase whitespace-nowrap" style={{ color: colors.goldLight }}>Astrología · Numerología · Tarot</span>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-10 list-none">
+            {navLinks.map((link) => (
+              "hash" in link ? (
+                <a
+                  key={link.to + link.hash}
+                  href={link.to + link.hash}
+                  onClick={(e) => {
+                    if (window.location.pathname === link.to) {
+                      e.preventDefault();
+                      document.getElementById(link.hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                  className="text-xs font-semibold tracking-[2px] uppercase text-[#cdb6a8] hover:text-white transition-colors"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.to} to={link.to} className="text-xs font-semibold tracking-[2px] uppercase text-[#cdb6a8] hover:text-white transition-colors">
+                  {link.label}
+                </Link>
+              )
+            ))}
+            <Link to="/portal" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase transition-all hover:opacity-90" style={{ background: colors.goldBright, color: "#080010" }}>
               <span style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>♦</span>
               Entrar →
             </Link>
-          </li>
-        </ul>
+          </div>
+
+          <div className="flex items-center gap-3 lg:hidden">
+            <Link to="/register" className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase" style={{ background: colors.goldBright, color: "#080010" }}>
+              Entrar
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label="Abrir menú"
+              aria-expanded={menuOpen}
+              className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[rgba(205,182,168,0.25)] text-[#f0e8d8] hover:border-[#bda76c] hover:text-[#bda76c] transition-colors"
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
       </nav>
 
+      {menuOpen && (
+        <div className="fixed top-[72px] left-0 right-0 z-40 lg:hidden px-4 sm:px-6">
+          <div className="rounded-2xl border border-[rgba(189,167,108,0.18)] bg-[#0d0518]/95 backdrop-blur-xl p-4 shadow-2xl">
+            <div className="flex flex-col gap-2">
+              {navLinks.map((link) => (
+                "hash" in link ? (
+                  <a
+                    key={link.to + link.hash}
+                    href={link.to + link.hash}
+                    onClick={(e) => {
+                      setMenuOpen(false);
+                      if (window.location.pathname === link.to) {
+                        e.preventDefault();
+                        document.getElementById(link.hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                    className="rounded-xl px-4 py-3 text-sm font-semibold tracking-[1.5px] uppercase text-[#cdb6a8] hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-xl px-4 py-3 text-sm font-semibold tracking-[1.5px] uppercase text-[#cdb6a8] hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center text-center px-[60px] py-[120px] z-10">
+      <section className="relative min-h-screen flex items-center justify-center text-center px-4 sm:px-6 md:px-[60px] py-[120px] z-10">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[58%] w-[800px] h-[500px] rounded-[50%] pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(195,158,214,0.28) 0%, rgba(87,55,89,0.2) 40%, transparent 70%)", filter: "blur(24px)", animation: "pulseGlow 5s ease-in-out infinite" }} />
         
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="relative z-20">
@@ -173,12 +252,12 @@ const Index = () => {
           <p className="font-serif text-lg md:text-xl italic text-[#c39ed6] max-w-[540px] mx-auto mt-7 mb-[52px] leading-relaxed">Porque entender lo que te pasa cambia todo lo que decidís después.</p>
           
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link to="/subscribe" className="inline-flex items-center gap-2.5 px-10 py-4 rounded-full text-xs font-bold tracking-[2px] uppercase transition-all hover:opacity-90 hover:translate-y-[-2px]" style={{ background: colors.goldBright, color: "#080010", boxShadow: "0 20px 60px rgba(232,196,106,0.3)" }}>
+            <Link to="/register" className="inline-flex items-center gap-2.5 px-10 py-4 rounded-full text-xs font-bold tracking-[2px] uppercase transition-all hover:opacity-90 hover:translate-y-[-2px]" style={{ background: colors.goldBright, color: "#080010", boxShadow: "0 20px 60px rgba(232,196,106,0.3)" }}>
               Acceder al portal →
             </Link>
-            <Link to="/portal-preview" className="inline-flex items-center gap-2 px-10 py-4 rounded-full text-xs font-semibold tracking-[2px] uppercase border transition-all hover:border-[#bda76c] hover:text-[#bda76c]" style={{ borderColor: "rgba(205,182,168,0.3)", color: "#f0e8d8" }}>
+            <a href="#video" className="inline-flex items-center gap-2 px-10 py-4 rounded-full text-xs font-semibold tracking-[2px] uppercase border transition-all hover:border-[#bda76c] hover:text-[#bda76c]" style={{ borderColor: "rgba(205,182,168,0.3)", color: "#f0e8d8" }}>
               Ver cómo funciona
-            </Link>
+            </a>
           </div>
         </motion.div>
         
@@ -205,21 +284,21 @@ const Index = () => {
             </div>
             <div className="flex flex-col gap-6">
               <div className="flex gap-5 items-start">
-                <span className="font-serif text-[34px] font-black text-white opacity-20 leading-none w-11">01</span>
+                <span className="font-numeric text-[34px] font-black text-white opacity-20 leading-none w-11">01</span>
                 <div>
                   <strong className="block text-xs font-bold tracking-[1px] uppercase mb-1" style={{ color: colors.goldLight }}>Detectar el patrón</strong>
                   <p className="text-sm text-[#a89ab5] leading-relaxed">La astrología describe los mecanismos internos que generan tus resultados externos.</p>
                 </div>
               </div>
               <div className="flex gap-5 items-start">
-                <span className="font-serif text-[34px] font-black text-white opacity-20 leading-none w-11">02</span>
+                <span className="font-numeric text-[34px] font-black text-white opacity-20 leading-none w-11">02</span>
                 <div>
                   <strong className="block text-xs font-bold tracking-[1px] uppercase mb-1" style={{ color: colors.goldLight }}>Comprender cómo opera</strong>
                   <p className="text-sm text-[#a89ab5] leading-relaxed">No es lo que te pasa — es cómo lo estás interpretando. Ahí empieza la transformación.</p>
                 </div>
               </div>
               <div className="flex gap-5 items-start">
-                <span className="font-serif text-[34px] font-black text-white opacity-20 leading-none w-11">03</span>
+                <span className="font-numeric text-[34px] font-black text-white opacity-20 leading-none w-11">03</span>
                 <div>
                   <strong className="block text-xs font-bold tracking-[1px] uppercase mb-1" style={{ color: colors.goldLight }}>Abrir la posibilidad</strong>
                   <p className="text-sm text-[#a89ab5] leading-relaxed">Si lo generaste, también podés cambiarlo. Esa es la mejor noticia posible.</p>
@@ -327,7 +406,7 @@ const Index = () => {
       </section>
 
       {/* VIDEO */}
-      <section className="relative z-10 py-24">
+      <section className="relative z-10 py-24"  id="video">
         <div className="max-w-[1200px] mx-auto px-[60px]">
           <div className="fade-in">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7" style={{ background: "rgba(87,55,89,0.3)", border: "1px solid rgba(189,167,108,0.25)" }}>
@@ -335,7 +414,7 @@ const Index = () => {
               <span className="text-[9px] font-bold tracking-[3px] uppercase" style={{ color: colors.goldLight }}>Mirá el portal por dentro</span>
             </div>
             <h2 className="font-serif text-4xl md:text-6xl font-black leading-none tracking-[-1px] mb-5">
-              Antes de entrar,<br /><span style={{ color: colors.goldBright, fontStyle: "italic" }}>conoci qué hay.</span>
+              Antes de entrar,<br /><span style={{ color: colors.goldBright, fontStyle: "italic" }}>conoce qué hay.</span>
             </h2>
           </div>
           <div className="mt-14 rounded-2xl overflow-hidden border" style={{ background: "rgba(20,5,35,0.9)", borderColor: "rgba(87,55,89,0.5)", aspectRatio: "16/9" }}>
@@ -396,7 +475,7 @@ const Index = () => {
       </div>
 
       {/* CARLOS */}
-      <section className="relative z-10 py-24" style={{ borderTop: "1px solid rgba(189,167,108,0.1)", borderBottom: "1px solid rgba(189,167,108,0.1)", background: "rgba(87,55,89,0.06)" }}>
+      <section className="relative z-10 py-24" id="carlos" style={{ borderTop: "1px solid rgba(189,167,108,0.1)", borderBottom: "1px solid rgba(189,167,108,0.1)", background: "rgba(87,55,89,0.06)" }}>
         <div className="max-w-[1200px] mx-auto px-[60px]">
           <div className="grid md:grid-cols-2 gap-20 items-center fade-in">
             <div className="relative">
@@ -420,11 +499,11 @@ const Index = () => {
               <p className="font-serif text-lg font-light text-[#cdb6a8] leading-relaxed mb-9">Hoy, después de miles de consultas privadas, entiendo algo que no se aprende en ningún libro: el problema nunca es lo que te pasa. Es que todavía no entendés por qué te pasa.</p>
               <div className="flex gap-10 pt-9 border-t border-[rgba(189,167,108,0.15)]">
                 <div>
-                  <span className="font-serif text-[34px] font-black block" style={{ color: colors.goldBright }}>5.000+</span>
+                  <span className="font-numeric text-[34px] font-black block" style={{ color: colors.goldBright }}>5.000+</span>
                   <span className="text-[10px] text-[#a89ab5] tracking-[1px] uppercase mt-1 block">Consultas privadas</span>
                 </div>
                 <div>
-                  <span className="font-serif text-[34px] font-black block" style={{ color: colors.goldBright }}>2.000+</span>
+                  <span className="font-numeric text-[34px] font-black block" style={{ color: colors.goldBright }}>2.000+</span>
                   <span className="text-[10px] text-[#a89ab5] tracking-[1px] uppercase mt-1 block">Cartas astrales</span>
                 </div>
                 <div>
@@ -486,7 +565,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-6 max-w-[900px] mx-auto">
             <div className="rounded-3xl p-11 fade-in" style={{ background: "rgba(20,5,35,0.9)", border: "1px solid rgba(87,55,89,0.5)" }}>
               <h3 className="font-serif text-2xl font-black text-white mb-1.5">Essentials</h3>
-              <div className="font-serif text-5xl font-black mb-1.5" style={{ color: colors.goldBright }}>$0</div>
+              <div className="font-numeric text-5xl font-black mb-1.5" style={{ color: colors.goldBright }}>$0</div>
               <div className="text-sm text-[#a89ab5] mb-4 flex items-center gap-2.5 flex-wrap">
                 Para siempre <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold tracking-[1.5px] uppercase" style={{ background: "rgba(232,196,106,0.15)", border: "1px solid rgba(232,196,106,0.5)", color: colors.goldBright }}>✦ Sin tarjeta</span>
               </div>
@@ -506,8 +585,8 @@ const Index = () => {
               <div className="absolute top-0 left-0 right-0 h-0.75" style={{ background: `linear-gradient(90deg, ${colors.gold}, ${colors.goldBright}, ${colors.gold})` }} />
               <div className="absolute top-6 right-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-bold tracking-[2px] uppercase" style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)", color: "#fff" }}>♦ LUMINARY</div>
               <h3 className="font-serif text-2xl font-black text-white mb-1.5">Luminary</h3>
-              <div className="font-serif text-5xl font-black mb-1.5" style={{ color: colors.goldBright }}><sup>$</sup>29</div>
-              <p className="text-sm text-[#a89ab5] mb-4">por mes · o anual con 2 meses gratis</p>
+              <div className="font-numeric text-5xl font-black mb-1.5" style={{ color: colors.goldBright }}><sup>$</sup>29</div>
+              <p className="text-sm text-[#a89ab5] mb-4">por mes</p>
               <p className="text-sm text-[#a89ab5] leading-relaxed mb-6">Todo el sistema. Astrología, numerología profunda y acompañamiento real de Carlos.</p>
               <ul className="flex flex-col gap-2.5 mb-8">
                 {["Todo lo de Essentials incluido", "Carta natal completa + sinastría", "Numerología completa", "Mirada predictiva completa", "Chatbot entrenado por Carlos", "1 respuesta humana de Carlos por mes", "Historial vivo del proceso", "Precio especial en servicios extras"].map((item, i) => (
@@ -523,35 +602,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* EXTRAS */}
-      <section className="relative z-10 py-24" style={{ background: "linear-gradient(135deg, rgba(20,5,35,0.95), rgba(87,55,89,0.15))" }}>
+      {/* EXTRAS - Public purchase cards with dual pricing */}
+      <section className="relative z-10 py-24" id="servicios" style={{ background: "linear-gradient(135deg, rgba(20,5,35,0.95), rgba(87,55,89,0.15))" }}>
         <div className="max-w-[1200px] mx-auto px-[60px]">
           <div className="mb-12 fade-in">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7" style={{ background: "rgba(87,55,89,0.3)", border: "1px solid rgba(189,167,108,0.25)" }}>
               <span style={{ color: colors.goldBright }}>◆</span>
-              <span className="text-[9px] font-bold tracking-[3px] uppercase" style={{ color: colors.goldLight }}>Servicios extras</span>
+              <span className="text-[9px] font-bold tracking-[3px] uppercase" style={{ color: colors.goldLight }}>Servicios adicionales</span>
             </div>
             <h2 className="font-serif text-4xl md:text-6xl font-black leading-none mb-5">
-              Más allá<br /><span style={{ color: colors.goldBright, fontStyle: "italic" }}>del plan.</span>
+              Servicios<br /><span style={{ color: colors.goldBright, fontStyle: "italic" }}>para pedir ahora.</span>
             </h2>
-            <p className="font-serif text-xl font-light text-[#a89ab5] leading-relaxed max-w-[600px] mb-8">Además de tu portal, podés contratar servicios adicionales cuando los necesités — sin compromisos.</p>
-            <Link to="/subscribe" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-xs font-semibold tracking-[2px] uppercase border transition-all hover:border-[#bda76c] hover:text-[#bda76c]" style={{ background: "rgba(87,55,89,0.25)", border: "1px solid rgba(195,158,214,0.25)", color: colors.lavender }}>Ver todos los servicios →</Link>
+            <p className="font-serif text-xl font-light text-[#a89ab5] leading-relaxed max-w-[600px] mb-8">Comprá un servicio directamente desde la página principal. Mostramos precio regular y precio para suscriptoras Luminary.</p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-4 mb-12">
-            {[
-              { icon: "🎙️", title: "Sesión en vivo", desc: "Una sesión personal con Carlos en tiempo real. Disponible bajo demanda. Precio especial para suscriptoras activas del plan Luminary." },
-              { icon: "⚡", title: "Consulta puntual", desc: "Una pregunta concreta respondida por Carlos en profundidad. Exclusivo para suscriptoras Luminary." },
-              { icon: "📄", title: "Informe especial", desc: "Tránsitos del momento, compatibilidad avanzada, carta progresada. Informes específicos y detallados a pedido." },
-            ].map((extra, i) => (
-              <div key={i} className="rounded-2xl p-7 transition-all duration-300 fade-in" style={{ background: "rgba(87,55,89,0.12)", border: "1px solid rgba(87,55,89,0.4)" }}>
-                <span className="text-3xl block mb-3.5">{extra.icon}</span>
-                <h3 className="font-serif text-lg font-bold text-white mb-2">{extra.title}</h3>
-                <p className="text-sm text-[#a89ab5] leading-relaxed">{extra.desc}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-center font-serif text-lg italic text-[#c39ed6] fade-in">Los detalles y precios de cada servicio están disponibles dentro del portal.</p>
+
+          {/* services list */}
+          <ServiceCards />
         </div>
       </section>
 

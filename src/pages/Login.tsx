@@ -28,6 +28,9 @@ const Login = () => {
       billing: "monthly" | "annual";
       provider?: "paypal" | "mercado_pago";
     };
+    servicePurchaseIntent?: {
+      serviceId?: string | null;
+    };
     paypalSubscriptionIntent?: {
       plan: SubscriptionPlan;
       billing: "monthly" | "annual";
@@ -38,6 +41,7 @@ const Login = () => {
     ?? (locationState?.paypalSubscriptionIntent
       ? { ...locationState.paypalSubscriptionIntent, provider: "paypal" as const }
       : null);
+  const servicePurchaseIntent = locationState?.servicePurchaseIntent ?? null;
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to={isAdmin ? "/admin" : "/portal"} replace />;
@@ -81,6 +85,11 @@ const Login = () => {
             setError(message);
             return;
           }
+        }
+        if (servicePurchaseIntent) {
+          const serviceId = servicePurchaseIntent.serviceId ?? "";
+          navigate(`/portal/purchase?product=service${serviceId ? `&service=${encodeURIComponent(serviceId)}` : ""}`);
+          return;
         }
         navigate("/portal");
       } else {
