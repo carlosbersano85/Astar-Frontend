@@ -1,98 +1,65 @@
 import { motion } from "framer-motion";
-import { Check, Shield, Star, Crown } from "lucide-react";
-import { useState } from "react";
+import { Check, Shield, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   apiCreateMercadoPagoSubscription,
   apiCreatePayPalSubscription,
-  type SubscriptionPlan,
 } from "@/lib/api";
 
 const plans = [
   {
-    name: "Essentials",
+    name: "Free",
     icon: Shield,
-    price: { monthly: 19, annual: 15 },
-    tagline: "Ideal para explorar tu mapa simbólico",
-    cta: "Comenzar mi plan",
+    price: 0,
+    tagline: "Acceso gratuito al portal",
+    cta: "Empezar gratis",
     highlighted: false,
+    paid: false,
     features: [
-      "Carta natal completa (acceso permanente)",
-      "Reporte de numerología personal",
-      "Reportes simbólicos base",
-      "Acceso al portal con historial completo",
-      "Soporte comunitario",
+      "Acceso básico al portal",
+      "Lecturas iniciales",
+      "Explora tu recorrido personal",
     ],
   },
   {
-    name: "Portal",
+    name: "Luminary",
     icon: Star,
-    price: { monthly: 39, annual: 29 },
-    tagline: "Guía completa con acompañamiento humano",
-    cta: "Comenzar mi plan",
+    price: 29,
+    tagline: "Acompañamiento humano mensual",
+    cta: "Elegir Luminary",
     highlighted: true,
+    paid: true,
     features: [
-      "Todo de Essentials, más:",
-      "Revolución solar del año en curso",
-      "Mensaje mensual personalizado",
-      "1 pregunta mensual con respuesta humana",
-      "Soporte prioritario por email",
-      "Acceso anticipado a nuevas funciones",
-    ],
-  },
-  {
-    name: "Depth",
-    icon: Crown,
-    price: { monthly: 79, annual: 59 },
-    tagline: "Máxima profundidad con soporte dedicado",
-    cta: "Comenzar mi plan",
-    highlighted: false,
-    features: [
-      "Todo de Portal, más:",
-      "3 preguntas mensuales con respuesta humana",
-      "1 sesión privada por mes",
-      "Reportes simbólicos extendidos",
-      "Guía dedicada",
-      "Agendamiento de sesiones a medida",
+      "Todo lo de Free, más:",
+      "1 respuesta humana mensual",
+      "Chatbot de Astar entrenado por Carlos",
+      "Precio especial en servicios",
+      "Acceso completo al portal",
     ],
   },
 ];
 
 const PricingSection = () => {
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
-  const [loadingProvider, setLoadingProvider] = useState<"paypal" | "mercado_pago" | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const planKeyByName: Record<string, SubscriptionPlan> = {
-    Essentials: "essentials",
-    Portal: "portal",
-    Depth: "depth",
-  };
-
-  const handleSubscribe = async (planName: string, provider: "paypal" | "mercado_pago") => {
-    const plan = planKeyByName[planName];
-    if (!plan) return;
-
+  const handleSubscribe = async (provider: "paypal" | "mercado_pago") => {
     if (!isAuthenticated) {
       toast({
         title: "Inicia sesión para continuar",
-        description: "Necesitas una cuenta para activar tu suscripción.",
+        description: "Necesitas una cuenta para activar Luminary.",
       });
-      navigate("/login", { state: { subscriptionIntent: { plan, billing, provider } } });
+      navigate("/login", { state: { subscriptionIntent: { plan: "portal", billing: "monthly", provider } } });
       return;
     }
 
     try {
-      setLoadingPlan(plan);
-      setLoadingProvider(provider);
       const result = provider === "paypal"
-        ? await apiCreatePayPalSubscription({ plan, billing })
-        : await apiCreateMercadoPagoSubscription({ plan, billing });
+        ? await apiCreatePayPalSubscription({ plan: "portal", billing: "monthly" })
+        : await apiCreateMercadoPagoSubscription({ plan: "portal", billing: "monthly" });
       if (provider === "mercado_pago") {
         localStorage.setItem("astar_mp_subscription_id", result.subscriptionId);
       }
@@ -104,8 +71,6 @@ const PricingSection = () => {
         description: message,
         variant: "destructive",
       });
-      setLoadingPlan(null);
-      setLoadingProvider(null);
     }
   };
 
@@ -132,36 +97,8 @@ const PricingSection = () => {
           </p>
         </motion.div>
 
-        {/* Billing toggle */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6 }}
-          className="flex items-center justify-center gap-1 mb-16"
-        >
-          <button
-            onClick={() => setBilling("monthly")}
-            className={`px-6 py-2.5 rounded-full text-sm font-medium tracking-wide transition-all duration-300 ${billing === "monthly"
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "border border-border/50 text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            Pago mensual
-          </button>
-          <button
-            onClick={() => setBilling("annual")}
-            className={`px-6 py-2.5 rounded-full text-sm font-medium tracking-wide transition-all duration-300 ${billing === "annual"
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "border border-border/50 text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            Pago anual
-          </button>
-        </motion.div>
-
         {/* Plans grid */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
@@ -184,41 +121,46 @@ const PricingSection = () => {
               {/* Price */}
               <div className="mb-2">
                 <motion.span
-                  key={`${plan.name}-${billing}`}
+                  key={plan.name}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   className="font-numeric text-5xl font-light text-gradient-gold inline-block tabular-nums"
                 >
-                  ${plan.price[billing]}
+                  ${plan.price}
                 </motion.span>
-                <span className="text-muted-foreground text-sm ml-2">/ mes</span>
+                <span className="text-muted-foreground text-sm ml-2">{plan.name === "Free" ? "USD" : "USD / mes"}</span>
               </div>
               <p className="text-sm text-muted-foreground mb-8">{plan.tagline}</p>
 
               {/* CTA */}
               <div className="space-y-3 mb-8">
-                <button
-                  onClick={() => handleSubscribe(plan.name, "paypal")}
-                  disabled={loadingPlan === planKeyByName[plan.name]}
-                  className={`w-full py-3.5 rounded-full font-medium tracking-wide text-sm transition-all duration-300 ${plan.highlighted
-                      ? "shimmer-gold text-primary-foreground hover:opacity-90"
-                      : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
-                    } disabled:opacity-60 disabled:cursor-not-allowed`}
-                >
-                  {loadingPlan === planKeyByName[plan.name] && loadingProvider === "paypal"
-                    ? "Redirigiendo..."
-                    : `${plan.cta} con PayPal`}
-                </button>
-                <button
-                  onClick={() => handleSubscribe(plan.name, "mercado_pago")}
-                  disabled={loadingPlan === planKeyByName[plan.name]}
-                  className="w-full py-3.5 rounded-full border border-border text-foreground hover:border-primary/50 hover:bg-primary/5 font-medium tracking-wide text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loadingPlan === planKeyByName[plan.name] && loadingProvider === "mercado_pago"
-                    ? "Redirigiendo..."
-                    : `${plan.cta} con Mercado Pago`}
-                </button>
+                {plan.paid ? (
+                  <>
+                    <button
+                      onClick={() => handleSubscribe("paypal")}
+                      className={`w-full py-3.5 rounded-xl font-medium tracking-wide text-sm transition-all duration-300 ${plan.highlighted
+                          ? "shimmer-gold text-primary-foreground hover:opacity-90 glow-gold"
+                          : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
+                        } disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      {plan.cta} con PayPal
+                    </button>
+                    <button
+                      onClick={() => handleSubscribe("mercado_pago")}
+                      className="w-full py-3.5 rounded-xl border border-border/50 text-foreground hover:border-primary/50 hover:bg-primary/5 font-medium tracking-wide text-sm transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {plan.cta} con Mercado Pago
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="w-full py-3.5 rounded-xl border border-border/50 text-foreground hover:border-primary/50 hover:bg-primary/5 font-medium tracking-wide text-sm transition-all duration-300"
+                  >
+                    Crear cuenta gratis
+                  </button>
+                )}
               </div>
 
               {/* Divider */}
@@ -237,7 +179,6 @@ const PricingSection = () => {
           ))}
         </div>
 
-        {/* Extra services note */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -246,8 +187,7 @@ const PricingSection = () => {
           className="mt-8 p-6 rounded-xl glass-card text-center premium-shadow"
         >
           <p className="text-sm text-muted-foreground">
-            <span className="text-foreground">¿Necesitas más?</span> Puedes añadir preguntas extra o sesiones privadas como
-            complemento a tu suscripción. · PayPal
+            Free is available to everyone. Luminary unlocks the full experience for $29 USD/month.
           </p>
         </motion.div>
       </div>

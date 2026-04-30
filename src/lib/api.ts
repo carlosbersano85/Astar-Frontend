@@ -7,6 +7,16 @@ const getToken = (): string | null => localStorage.getItem("astar_token");
 
 export type SubscriptionPlan = "essentials" | "portal" | "depth";
 export type BillingCycle = "monthly" | "annual";
+export type OneTimeServiceId =
+  | "current-moment"
+  | "inner-energy"
+  | "making-decision"
+  | "next-6-months"
+  | "next-12-months"
+  | "personal-audio"
+  | "live-birth-chart"
+  | "live-solar-return"
+  | "three-questions";
 
 export interface ApiUser {
   id: string;
@@ -203,7 +213,9 @@ export async function apiCancelMercadoPagoSubscription(subscriptionId: string, r
   return body as { ok: true };
 }
 
-export interface PayPalExtraSessionPricing {
+export interface PayPalServicePricing {
+  serviceId?: OneTimeServiceId | null;
+  serviceTitle?: string;
   subscriberAmount: string;
   nonSubscriberAmount: string;
   amount: string;
@@ -211,7 +223,9 @@ export interface PayPalExtraSessionPricing {
   currency: string;
 }
 
-export interface MercadoPagoExtraSessionPricing {
+export interface MercadoPagoServicePricing {
+  serviceId?: OneTimeServiceId | null;
+  serviceTitle?: string;
   subscriberAmount: string;
   nonSubscriberAmount: string;
   amount: string;
@@ -219,35 +233,38 @@ export interface MercadoPagoExtraSessionPricing {
   currency: string;
 }
 
-export async function apiGetPayPalExtraSessionPricing(): Promise<PayPalExtraSessionPricing> {
-  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/pricing`, {
+export async function apiGetPayPalServicePricing(serviceId?: OneTimeServiceId | null): Promise<PayPalServicePricing> {
+  const query = serviceId ? `?serviceId=${encodeURIComponent(serviceId)}` : "";
+  const res = await fetch(`${API_BASE}/payments/paypal/service/pricing${query}`, {
     method: "GET",
     headers: authHeaders(),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio del servicio");
   }
-  return body as PayPalExtraSessionPricing;
+  return body as PayPalServicePricing;
 }
 
-export async function apiCreatePayPalExtraSessionOrder(): Promise<{
+export async function apiCreatePayPalServiceOrder(serviceId?: OneTimeServiceId | null): Promise<{
   orderId: string;
   approvalUrl: string;
+  serviceId?: OneTimeServiceId | null;
+  serviceTitle?: string;
   subscriberAmount: string;
   nonSubscriberAmount: string;
   amount: string;
   isSubscriber: boolean;
   currency: string;
 }> {
-  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/create`, {
+  const res = await fetch(`${API_BASE}/payments/paypal/service/create`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({}),
+    body: JSON.stringify({ serviceId: serviceId ?? undefined }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago del servicio");
   }
   return body as {
     orderId: string;
@@ -260,22 +277,24 @@ export async function apiCreatePayPalExtraSessionOrder(): Promise<{
   };
 }
 
-export async function apiConfirmPayPalExtraSessionOrder(orderId: string): Promise<{
+export async function apiConfirmPayPalServiceOrder(orderId: string, serviceId?: OneTimeServiceId | null): Promise<{
   ok: true;
   orderId: string;
   created?: boolean;
   amount: string;
   currency: string;
   tier: "subscriber" | "standard";
+  serviceId?: OneTimeServiceId | null;
+  serviceTitle?: string;
 }> {
-  const res = await fetch(`${API_BASE}/payments/paypal/extra-session/confirm`, {
+  const res = await fetch(`${API_BASE}/payments/paypal/service/confirm`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ orderId, subscriptionId: orderId }),
+    body: JSON.stringify({ orderId, subscriptionId: orderId, serviceId: serviceId ?? undefined }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago del servicio");
   }
   return body as {
     ok: true;
@@ -287,35 +306,38 @@ export async function apiConfirmPayPalExtraSessionOrder(orderId: string): Promis
   };
 }
 
-export async function apiGetMercadoPagoExtraSessionPricing(): Promise<MercadoPagoExtraSessionPricing> {
-  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/pricing`, {
+export async function apiGetMercadoPagoServicePricing(serviceId?: OneTimeServiceId | null): Promise<MercadoPagoServicePricing> {
+  const query = serviceId ? `?serviceId=${encodeURIComponent(serviceId)}` : "";
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/service/pricing${query}`, {
     method: "GET",
     headers: authHeaders(),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio de sesion extra");
+    throw new Error((body as { message?: string }).message ?? "No se pudo obtener el precio del servicio");
   }
-  return body as MercadoPagoExtraSessionPricing;
+  return body as MercadoPagoServicePricing;
 }
 
-export async function apiCreateMercadoPagoExtraSessionPreference(): Promise<{
+export async function apiCreateMercadoPagoServicePreference(serviceId?: OneTimeServiceId | null): Promise<{
   preferenceId: string;
   checkoutUrl: string;
+  serviceId?: OneTimeServiceId | null;
+  serviceTitle?: string;
   subscriberAmount: string;
   nonSubscriberAmount: string;
   amount: string;
   isSubscriber: boolean;
   currency: string;
 }> {
-  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/create`, {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/service/create`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({}),
+    body: JSON.stringify({ serviceId: serviceId ?? undefined }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago de la sesion extra");
+    throw new Error((body as { message?: string }).message ?? "No se pudo iniciar el pago del servicio");
   }
   return body as {
     preferenceId: string;
@@ -328,22 +350,24 @@ export async function apiCreateMercadoPagoExtraSessionPreference(): Promise<{
   };
 }
 
-export async function apiConfirmMercadoPagoExtraSessionPayment(paymentId: string): Promise<{
+export async function apiConfirmMercadoPagoServicePayment(paymentId: string, serviceId?: OneTimeServiceId | null): Promise<{
   ok: true;
   paymentId: string;
   created?: boolean;
   amount: string;
   currency: string;
   tier: "subscriber" | "standard";
+  serviceId?: OneTimeServiceId | null;
+  serviceTitle?: string;
 }> {
-  const res = await fetch(`${API_BASE}/payments/mercado-pago/extra-session/confirm`, {
+  const res = await fetch(`${API_BASE}/payments/mercado-pago/service/confirm`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ paymentId, collectionId: paymentId }),
+    body: JSON.stringify({ paymentId, collectionId: paymentId, serviceId: serviceId ?? undefined }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago de la sesion extra");
+    throw new Error((body as { message?: string }).message ?? "No se pudo confirmar el pago del servicio");
   }
   return body as {
     ok: true;

@@ -1,17 +1,19 @@
 // Purchase.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, ShoppingCart, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
-  apiConfirmMercadoPagoExtraSessionPayment,
-  apiConfirmPayPalExtraSessionOrder,
-  apiCreateMercadoPagoExtraSessionPreference,
-  apiCreatePayPalExtraSessionOrder,
-  apiGetMercadoPagoExtraSessionPricing,
-  apiGetPayPalExtraSessionPricing,
-  type MercadoPagoExtraSessionPricing,
-  type PayPalExtraSessionPricing,
+  apiConfirmMercadoPagoServicePayment,
+  apiConfirmPayPalServiceOrder,
+  apiCreateMercadoPagoServicePreference,
+  apiCreatePayPalServiceOrder,
+  apiGetMercadoPagoServicePricing,
+  apiGetPayPalServicePricing,
+  type OneTimeServiceId,
+  type MercadoPagoServicePricing,
+  type PayPalServicePricing,
 } from "@/lib/api";
 
 function formatMoney(value: string, currency: string) {
@@ -30,10 +32,28 @@ function formatMoney(value: string, currency: string) {
 const isExpiredCheckout = (message: string) => message.includes("EXPIRED_CHECKOUT");
 type PaymentMethod = "paypal" | "mercado_pago";
 
+const SERVICE_TITLES: Record<OneTimeServiceId, string> = {
+  "current-moment": "Your Current Moment Reading + Questions",
+  "inner-energy": "Inner Energy vs. Outward Expression",
+  "making-decision": "Making a Decision",
+  "next-6-months": "Your Next Steps (6 Months)",
+  "next-12-months": "Your Next Steps (12 Months)",
+  "personal-audio": "Personalized Audio",
+  "live-birth-chart": "Live Birth Chart Reading",
+  "live-solar-return": "Live Solar Return Reading",
+  "three-questions": "3 Questions (All Tools)",
+};
+
+const isOneTimeServiceId = (value: string | null): value is OneTimeServiceId => {
+  return !!value && value in SERVICE_TITLES;
+};
+
 const Purchase = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [pricing, setPricing] = useState<PayPalExtraSessionPricing | null>(null);
-  const [mercadoPagoPricing, setMercadoPagoPricing] = useState<MercadoPagoExtraSessionPricing | null>(null);
+  const navigate = useNavigate();
+  const { isAuthenticated, authLoading } = useAuth();
+  const [pricing, setPricing] = useState<PayPalServicePricing | null>(null);
+  const [mercadoPagoPricing, setMercadoPagoPricing] = useState<MercadoPagoServicePricing | null>(null);
   const [loadingPricing, setLoadingPricing] = useState(true);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -41,6 +61,22 @@ const Purchase = () => {
   const [isExpired, setIsExpired] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("paypal");
+  const serviceParam = searchParams.get("service");
+  const selectedServiceId = isOneTimeServiceId(serviceParam) ? serviceParam : null;
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (isAuthenticated) return;
+
+    navigate("/login", {
+      replace: true,
+      state: {
+        servicePurchaseIntent: {
+          serviceId: selectedServiceId,
+        },
+      },
+    });
+  }, [authLoading, isAuthenticated, navigate, selectedServiceId]);
 
   // Stores the subscription ID that was already attempted so the auto-confirm
   // effect never fires twice for the same ID, even across re-renders.
@@ -70,8 +106,8 @@ const Purchase = () => {
     let mounted = true;
     setLoadingPricing(true);
     Promise.all([
-      apiGetPayPalExtraSessionPricing(),
-      apiGetMercadoPagoExtraSessionPricing(),
+      apiGetPayPalServicePricing(selectedServiceId),
+      apiGetMercadoPagoServicePricing(selectedServiceId),
     ])
       .then(([paypalData, mercadoPagoData]) => {
         if (mounted) {
@@ -84,7 +120,7 @@ const Purchase = () => {
       })
       .finally(() => { if (mounted) setLoadingPricing(false); });
     return () => { mounted = false; };
-  }, []);
+  }, [selectedServiceId]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const clearCheckoutParams = () => {
@@ -93,6 +129,7 @@ const Purchase = () => {
       [
         "paypal",
         "product",
+        "service",
         "token",
         "subscription_id",
         "ba_token",
@@ -116,12 +153,12 @@ const Purchase = () => {
 
     try {
       const result = method === "paypal"
-        ? await apiConfirmPayPalExtraSessionOrder(checkoutId)
-        : await apiConfirmMercadoPagoExtraSessionPayment(checkoutId);
+        ? await apiConfirmPayPalServiceOrder(checkoutId, selectedServiceId)
+        : await apiConfirmMercadoPagoServicePayment(checkoutId, selectedServiceId);
       setSuccess(
         result.created === false
-          ? `Pago ya confirmado: ${formatMoney(result.amount, result.currency)}.`
-          : `Pago confirmado: ${formatMoney(result.amount, result.currency)}.`
+          ? `Pago ya confirmado: ${result.serviceTitle ?? "tu servicio"} - ${formatMoney(result.amount, result.currency)}.`
+          : `Pago confirmado: ${result.serviceTitle ?? "tu servicio"} - ${formatMoney(result.amount, result.currency)}.`
       );
       clearCheckoutParams();
     } catch (err) {
@@ -175,12 +212,12 @@ const Purchase = () => {
     setCreatingOrder(true);
     try {
       if (method === "paypal") {
-        const result = await apiCreatePayPalExtraSessionOrder();
+        const result = await apiCreatePayPalServiceOrder(selectedServiceId);
         window.location.href = result.approvalUrl;
         return;
       }
 
-      const result = await apiCreateMercadoPagoExtraSessionPreference();
+      const result = await apiCreateMercadoPagoServicePreference(selectedServiceId);
       window.location.href = result.checkoutUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar el pago");
@@ -189,137 +226,14 @@ const Purchase = () => {
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  const serviceTitle = selectedServiceId ? SERVICE_TITLES[selectedServiceId] : "Sesion privada adicional";
+  const serviceSubtitle = selectedServiceId
+    ? "Pago único para este servicio seleccionado."
+    : "Reserva una sesion privada extra.";
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <motion.section
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card rounded-2xl p-8 premium-shadow border border-primary/20"
-      >
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
-            <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2">Compra De Extras</p>
-            <h1 className="font-serif text-3xl text-foreground">Sesion privada adicional</h1>
-            <p className="text-sm text-muted-foreground mt-2 max-w-2xl">Reserva una sesion privada extra.</p>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-primary/12 border border-primary/30 flex items-center justify-center">
-            <ShoppingCart className="w-5 h-5 text-primary" />
-          </div>
-        </div>
-
-        {loadingPricing && (
-          <div className="mt-6 rounded-xl p-3 border border-primary/30 bg-primary/10 text-sm text-foreground flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Cargando precio...
-          </div>
-        )}
-
-        {pricing && mercadoPagoPricing && (
-          <div className="mt-6 rounded-xl border border-border/50 bg-background/30 p-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Tu precio ahora</p>
-              <p className="font-numeric text-xl font-semibold text-foreground mt-1">{appliedPrice}</p>
-            </div>
-            <div className="flex flex-col items-end gap-3">
-              <div className="flex items-center gap-2 text-xs">
-                <button
-                  onClick={() => setPaymentMethod("paypal")}
-                  className={`px-3 py-1 rounded-full border ${paymentMethod === "paypal" ? "border-primary bg-primary/15 text-primary" : "border-border/50 text-muted-foreground"}`}
-                >
-                  PayPal
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("mercado_pago")}
-                  className={`px-3 py-1 rounded-full border ${paymentMethod === "mercado_pago" ? "border-primary bg-primary/15 text-primary" : "border-border/50 text-muted-foreground"}`}
-                >
-                  Mercado Pago
-                </button>
-              </div>
-              <button
-                onClick={() => handlePayNow(paymentMethod)}
-                disabled={creatingOrder || confirming}
-                className="px-6 py-3 rounded-xl shimmer-gold text-primary-foreground text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
-              >
-                {creatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-                {creatingOrder
-                  ? "Redirigiendo..."
-                  : paymentMethod === "paypal"
-                    ? "Pagar con PayPal"
-                    : "Pagar con Mercado Pago"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {paypalStatus === "cancel" && !error && (
-          <div className="mt-6 rounded-xl p-3 border border-amber-300/40 bg-amber-200/10 text-sm text-amber-100 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" /> Pago cancelado en PayPal.
-          </div>
-        )}
-
-        {mercadoPagoStatus === "failure" && !error && (
-          <div className="mt-6 rounded-xl p-3 border border-amber-300/40 bg-amber-200/10 text-sm text-amber-100 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" /> Pago rechazado o cancelado en Mercado Pago.
-          </div>
-        )}
-
-        {mercadoPagoStatus === "pending" && !error && (
-          <div className="mt-6 rounded-xl p-3 border border-primary/30 bg-primary/10 text-sm text-foreground flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Pago pendiente en Mercado Pago. Te avisaremos cuando se apruebe.
-          </div>
-        )}
-
-        {confirming && (
-          <div className="mt-6 rounded-xl p-3 border border-primary/30 bg-primary/10 text-sm text-foreground flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Confirmando pago ...
-          </div>
-        )}
-
-        {success && (
-          <div className="mt-6 rounded-xl p-3 border border-emerald-400/40 bg-emerald-200/10 text-sm text-emerald-100 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> {success}
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-6 space-y-3">
-            <div className="rounded-xl p-3 border border-destructive/30 bg-destructive/10 text-sm text-destructive flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" /> {error}
-            </div>
-
-            {/* Expired: prompt to start a new checkout, not retry the dead ID */}
-            {isExpired && pricing && (
-              <button
-                onClick={() => handlePayNow(paymentMethod)}
-                disabled={creatingOrder || confirming}
-                className="px-4 py-2 rounded-lg shimmer-gold text-primary-foreground text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
-              >
-                {creatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                {creatingOrder ? "Redirigiendo..." : "Iniciar nuevo pago"}
-              </button>
-            )}
-
-            {/* Transient error (not expired): allow retrying the same ID */}
-            {!isExpired && (paypalCheckoutId || mercadoPagoPaymentId) && (
-              <button
-                onClick={handleRetryConfirmation}
-                disabled={confirming}
-                className="px-4 py-2 rounded-lg border border-primary/40 text-sm text-primary hover:bg-primary/10 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
-              >
-                {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                {confirming ? "Reintentando..." : "Reintentar confirmacion"}
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="mt-6 text-xs text-muted-foreground">
-          Si prefieres, puedes revisar tu estado en{" "}
-          <Link to="/portal/subscription" className="text-primary hover:underline">
-            Suscripcion
-          </Link>{" "}
-          antes de comprar.
-        </div>
-      </motion.section>
+      <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2">No hay sesiones adicionales disponibles.</p>
     </div>
   );
 };

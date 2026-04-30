@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Shield, Star, Crown } from "lucide-react";
+import { Check, Shield, Star } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -20,10 +20,10 @@ const plans = [
     price: { monthly: 0 },
     tagline: "Acceso gratuito al portal",
     highlighted: false,
+    paid: false,
     features: [
       "Carta natal de inicio",
       "Acceso al portal personal",
-      "Chatbot de Astar (versión básica)",
     ],
   },
   {
@@ -33,10 +33,12 @@ const plans = [
     price: { monthly: 29 },
     tagline: "Todo el sistema y respuesta humana mensual",
     highlighted: true,
+    paid: true,
     features: [
       "Todo lo de Free, más:",
       "Carta natal completa",
       "Numerología completa",
+      "Chatbot de Astar entrenado por Carlos",
       "1 respuesta humana de Carlos por mes",
       "Precio especial en servicios extras",
     ],
@@ -141,28 +143,39 @@ const Subscribe = () => {
 
               {/* CTA Buttons */}
               <div className="space-y-3 mb-8">
-                <button
-                  onClick={() => handleSubscribe(plan.name, "paypal")}
-                  disabled={loadingPlan === planKeyByName[plan.name]}
-                  className={`w-full py-3.5 rounded-xl font-medium tracking-wide text-sm transition-all duration-300 ${
-                    plan.highlighted
-                      ? "shimmer-gold text-primary-foreground hover:opacity-90 glow-gold"
-                      : "shimmer-gold text-primary-foreground hover:opacity-90"
-                  } disabled:opacity-60 disabled:cursor-not-allowed`}
-                >
-                  {loadingPlan === planKeyByName[plan.name] && loadingProvider === "paypal"
-                    ? "Redirigiendo..."
-                    : "Pagar con Paypal"}
-                </button>
-                <button
-                  onClick={() => handleSubscribe(plan.name, "mercado_pago")}
-                  disabled={loadingPlan === planKeyByName[plan.name]}
-                  className="w-full py-3.5 rounded-xl bg-accent border border-border/50 text-foreground font-medium tracking-wide hover:bg-accent/80 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loadingPlan === planKeyByName[plan.name] && loadingProvider === "mercado_pago"
-                    ? "Redirigiendo..."
-                    : "Pagar con Mercado Pago"}
-                </button>
+                {plan.paid ? (
+                  <>
+                    <button
+                      onClick={() => handleSubscribe(plan.name, "paypal")}
+                      disabled={loadingPlan === planKeyByName[plan.name]}
+                      className={`w-full py-3.5 rounded-xl font-medium tracking-wide text-sm transition-all duration-300 ${
+                        plan.highlighted
+                          ? "shimmer-gold text-primary-foreground hover:opacity-90 glow-gold"
+                          : "shimmer-gold text-primary-foreground hover:opacity-90"
+                      } disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      {loadingPlan === planKeyByName[plan.name] && loadingProvider === "paypal"
+                        ? "Redirigiendo..."
+                        : "Pagar con Paypal"}
+                    </button>
+                    <button
+                      onClick={() => handleSubscribe(plan.name, "mercado_pago")}
+                      disabled={loadingPlan === planKeyByName[plan.name]}
+                      className="w-full py-3.5 rounded-xl bg-accent border border-border/50 text-foreground font-medium tracking-wide hover:bg-accent/80 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {loadingPlan === planKeyByName[plan.name] && loadingProvider === "mercado_pago"
+                        ? "Redirigiendo..."
+                        : "Pagar con Mercado Pago"}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="w-full py-3.5 rounded-xl border border-border/50 text-foreground font-medium tracking-wide hover:bg-accent/80 transition-colors text-sm"
+                  >
+                    Crear cuenta gratis
+                  </button>
+                )}
               </div>
 
               {/* Divider */}
