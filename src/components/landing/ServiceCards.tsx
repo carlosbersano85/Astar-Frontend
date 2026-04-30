@@ -9,81 +9,81 @@ import {
 const services = [
   {
     id: "current-moment",
-    title: "Your Current Moment Reading + Questions",
+    title: "Lectura de tu momento actual + preguntas",
     description:
-      "Understand what is happening in your life right now and why. In addition, you'll be able to ask me questions live via chat to delve deeper and gain clarity on what's truly motivating you.",
+      "Comprendé qué está pasando en tu vida ahora y por qué. Además, vas a poder hacer preguntas en vivo por chat conmigo, para profundizar y llevar claridad a lo que realmente te está moviendo.",
     emoji: "🔮",
     regular: 260,
     subscriber: 130,
   },
   {
     id: "inner-energy",
-    title: "Your Inner Energy vs. What You're Showing Outwardly",
+    title: "Tu energía interna vs lo que estás mostrando",
     description:
-      "Discover the difference between who you are inside and what you're expressing outwardly. Ideal for understanding blocks, inconsistencies, and starting to align yourself.",
+      "Descubrí la diferencia entre quién sos por dentro y lo que estás expresando hacia afuera. Ideal para entender bloqueos, incoherencias y empezar a alinearte.",
     emoji: "🪞",
     regular: 200,
     subscriber: 100,
   },
   {
     id: "making-decision",
-    title: "Making a Decision",
+    title: "Tomar una decisión",
     description:
-      "If you're facing an important decision, I'll help you see what's influencing it and from what perspective you're choosing. More clarity to make conscious decisions.",
+      "Si estás frente a una decisión importante, te ayudo a ver qué la está condicionando y desde dónde estás eligiendo. Más claridad para decidir con conciencia.",
     emoji: "⚖️",
     regular: 160,
     subscriber: 80,
   },
   {
     id: "next-6-months",
-    title: "Your Next Steps (6 Months)",
+    title: "Tus próximos movimientos (6 meses)",
     description:
-      "Interpretation of the energies being activated in your life in the short term, so you understand where you're moving and how to support it.",
+      "Interpretación de las energías que se están activando en tu vida en el corto plazo, para que entiendas hacia dónde te estás moviendo y cómo acompañarlo.",
     emoji: "🗺️",
     regular: 380,
     subscriber: 180,
   },
   {
     id: "next-12-months",
-    title: "Your Next Steps (12 Months)",
+    title: "Tus próximos movimientos (12 meses)",
     description:
-      "A broader view of your process. It's not about predicting, but about understanding the cycles that are activated and how they can influence your decisions.",
+      "Una mirada más amplia de tu proceso. No se trata de predecir, sino de entender los ciclos que se activan y cómo pueden influir en tus decisiones.",
     emoji: "🌌",
     regular: 520,
     subscriber: 260,
   },
   {
     id: "personal-audio",
-    title: "Personalized Audio on What You Need",
+    title: "Audio personalizado de lo que necesites",
     description:
-      "A direct, in-depth, and personalized response in audio format, focused on your current situation. Ideal for listening, integrating, and reflecting.",
+      "Una respuesta directa, profunda y personalizada en formato audio, enfocada en tu situación actual. Ideal para escuchar, integrar y reflexionar.",
     emoji: "🎧",
     regular: 100,
     subscriber: 50,
   },
   {
     id: "live-birth-chart",
-    title: "Live Reading of Your Birth Chart",
+    title: "Lectura en vivo de tu carta astral",
     description:
-      "A session where we interpret your chart from a deep perspective, connecting your patterns, your history, and your present.",
+      "Un encuentro donde interpretamos tu carta desde una mirada profunda, conectando tus patrones, tu historia y tu presente.",
     emoji: "🧭",
     regular: 560,
     subscriber: 280,
   },
   {
     id: "live-solar-return",
-    title: "Live Solar Return Reading",
+    title: "Lectura en vivo de tu revolución solar",
     description:
-      "Understand the cycle you are going through this year, which areas are activated, and how you can take advantage of this movement.",
+      "Comprendé el ciclo que estás atravesando este año, qué áreas se activan y cómo podés aprovechar ese movimiento.",
     emoji: "☀️",
     regular: 560,
     subscriber: 280,
   },
   {
     id: "three-questions",
-    title: "3 Questions (Integrating All My Tools)",
+    title: "3 preguntas (integrando todas mis herramientas)",
     description:
-      "In-depth answers to your questions, integrating astrology, tarot, numerology, and unconscious pattern reading.",
+      "Respuestas profundas a tus preguntas, integrando astrología, tarot, numerología y lectura de patrones inconscientes.",
     emoji: "❓",
     regular: 120,
     subscriber: 60,
@@ -142,7 +142,7 @@ export default function ServiceCards() {
               Buy now
             </button>
             <div className="text-xs uppercase tracking-[0.18em] text-[#a89ab5]">
-              Luminary members get the discounted price
+              Los suscriptores obtienen el precio con descuento.
             </div>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function ServiceCards() {
             <div className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-4 flex items-end justify-between gap-4">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{payableLabel}</div>
-                <div className="mt-1 text-xs text-muted-foreground">This is the price you will pay now.</div>
+                <div className="mt-1 text-xs text-muted-foreground">Este es el precio que pagarás ahora.</div>
               </div>
               <div className="text-right">
                 <div className="font-numeric text-3xl font-semibold text-foreground">{formatUSD(payableAmount)}</div>
