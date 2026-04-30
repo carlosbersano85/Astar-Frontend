@@ -1,7 +1,5 @@
 // Railway production must always talk to the backend service, never localhost.
-const API_BASE = import.meta.env.PROD
-  ? "https://astarbackendnew-production.up.railway.app"
-  : (import.meta.env.VITE_API_URL?.trim() || "http://localhost:3000");
+const API_BASE = import.meta.env.VITE_API_URL;
 
 const getToken = (): string | null => localStorage.getItem("astar_token");
 

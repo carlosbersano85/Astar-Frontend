@@ -101,6 +101,15 @@ export default function ServiceCards() {
   const [openService, setOpenService] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  function renderTitleWithNumericFont(title: string) {
+  return title.split(/(\d+)/g).map((part, i) =>
+    /^\d+$/.test(part) ? (
+      <span key={i} className="font-numeric">{part}</span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
 
   const selectedService = services.find((service) => service.id === openService) ?? null;
   const payableAmount = selectedService
@@ -116,9 +125,9 @@ export default function ServiceCards() {
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-lg flex items-center justify-center text-3xl" style={{ background: "rgba(189,167,108,0.08)" }}>{s.emoji}</div>
             <div>
-              <h3 className="font-serif text-lg font-bold text-white mb-1">
-                {s.title}
-              </h3>
+<h3 className="font-serif text-lg font-bold text-white mb-1">
+  {renderTitleWithNumericFont(s.title)}
+</h3>
               <p className="text-sm text-[#a89ab5]">{s.description}</p>
             </div>
           </div>
