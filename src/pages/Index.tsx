@@ -56,6 +56,7 @@ const Index = () => {
     { to: "/", label: "Carlos", hash: "#carlos" },
     { to: "/subscribe", label: "Planes" },
     { to: "/", label: "Servicios", hash: "#servicios" },
+    { to: "/blog", label: "Blogs" },
   ] as const;
 
   // Stars canvas animation
@@ -631,14 +632,19 @@ const Index = () => {
             </div>
           </div>
           <div className="flex flex-col">
-            {frases.map((frase, i) => (
-              <div key={i} className="py-11 border-b border-[rgba(189,167,108,0.1)] opacity-65 hover:opacity-100 transition-opacity duration-400 fade-in">
-                <p className="font-serif text-2xl md:text-3xl italic font-normal text-white leading-relaxed text-center">
-                  "No es {frase.split("es")[0].replace('"', '').trim()}…<br />
-                  <strong style={{ color: colors.goldBright, fontStyle: "normal" }}>{frase.split("es")[1].trim()}</strong>"
-                </p>
-              </div>
-            ))}
+            {frases.map((frase, i) => {
+              const parts = frase.split('… es ');
+              const left = parts[0] ?? frase;
+              const right = parts[1] ? `es ${parts[1].trim()}` : '';
+              return (
+                <div key={i} className="py-11 border-b border-[rgba(189,167,108,0.1)] opacity-65 hover:opacity-100 transition-opacity duration-400 fade-in">
+                  <p className="font-serif text-2xl md:text-3xl italic font-normal text-white leading-relaxed text-center">
+                    "{left.trim()}…<br />
+                    <strong style={{ color: colors.goldBright, fontStyle: 'normal' }}>{right.trim()}</strong>"
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -661,9 +667,9 @@ const Index = () => {
               <div key={i} className="faq-item border-b border-[rgba(87,55,89,0.3)] last:border-b-0">
                 <button onClick={() => toggleFaq(i)} className="w-full bg-none border-none cursor-pointer p-6 flex items-center justify-between gap-5 text-left transition-colors hover:bg-[rgba(87,55,89,0.1)]">
                   <span className="text-xs font-bold tracking-[0.5px] uppercase" style={{ color: colors.goldLight }}>{item.q}</span>
-                  <span className="text-lg" style={{ color: colors.goldLight, transform: "rotate(0deg)", transition: "transform 0.3s" }}>+</span>
+                  <span className="faq-icon text-lg" style={{ color: colors.goldLight, transform: "rotate(0deg)", transition: "transform 0.3s" }}>+</span>
                 </button>
-                <div className="max-h-0 overflow-hidden transition-all duration-400 px-6">
+                <div className="faq-answer max-h-0 overflow-hidden transition-all duration-400 px-6">
                   <p className="text-sm text-[#a89ab5] leading-relaxed pb-6">{item.a}</p>
                 </div>
               </div>
