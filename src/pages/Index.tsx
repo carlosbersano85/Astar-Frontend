@@ -244,7 +244,7 @@ const Index = () => {
             <span className="text-[10px] font-semibold tracking-[3px] uppercase" style={{ color: colors.goldLight }}>Portal de Autoconocimiento</span>
           </div>
           
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-[-2px] mb-3">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-normal leading-[1.02] tracking-[-1px] mb-3" style={{ fontFamily: '"DM Serif Display", Georgia, serif' }}>
             <span className="block text-white">Tu propio espacio para encontrarle</span>
             <span className="block italic" style={{ background: "linear-gradient(90deg, #e8c46a 0%, #d5b0dd 30%, #ffffff 50%, #d5b0dd 70%, #e8c46a 100%)", backgroundSize: "300% auto", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", animation: "shimmerText 3s linear infinite" }}>sentido a lo que vivís.</span>
           </h1>
