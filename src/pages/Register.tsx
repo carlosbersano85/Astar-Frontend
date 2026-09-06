@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate, Link, Navigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, User, MapPin, Clock, Calendar as CalendarIcon, CalendarDays, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Clock, Calendar as CalendarIcon, CalendarDays } from "lucide-react";
 import { format, parse } from "date-fns";
 import { es } from "date-fns/locale";
 import Starfield from "@/components/landing/Starfield";
@@ -13,12 +13,24 @@ import TimePicker from "../components/ui/time-picker";
 import { cn } from "@/lib/utils";
 import { PrivacyPolicyModal } from "@/components/legal/LegalDocumentsModal";
 import { TermsModal } from "@/components/legal/LegalDocumentsModal";
+import BirthPlaceSearch from "@/components/auth/BirthPlaceSearch";
 
 const Register = () => {
   const navigate = useNavigate();
   const { register, isAuthenticated, isAdmin, authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", birthDate: "", birthPlace: "", birthTime: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    birthDate: "",
+    birthPlace: "",
+    birthTime: "12:00",
+    birthLatitude: "",
+    birthLongitude: "",
+    birthTimezone: "",
+    birthTimeKnown: true,
+  });
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +41,7 @@ const Register = () => {
   }
 
   const logoSrc = resolvedTheme === "light" ? "/3SIN%20FONDO/logosolofinal.png" : "/3SIN%20FONDO/logoblanco.png";
-  const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
+  const update = (field: string, value: string | boolean) => setForm((f) => ({ ...f, [field]: value }));
 
   const REGISTER_TIMEOUT_MS = 20_000;
 
@@ -40,12 +52,22 @@ const Register = () => {
       setError("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
+    if (!form.birthLatitude || !form.birthLongitude || !form.birthTimezone) {
+      setError("Selecciona tu ciudad de la lista para guardar el lugar exacto.");
+      return;
+    }
     setLoading(true);
     try {
       const timeoutPromise = new Promise<{ ok: false; error: string }>((_, reject) =>
         setTimeout(() => reject(new Error("timeout")), REGISTER_TIMEOUT_MS)
       );
-      const result = await Promise.race([register(form), timeoutPromise]);
+      const result = await Promise.race([
+        register({
+          ...form,
+          birthTime: form.birthTimeKnown ? form.birthTime : undefined,
+        }),
+        timeoutPromise,
+      ]);
       if ("error" in result) {
         setError(result.error);
       } else {
@@ -159,23 +181,52 @@ const Register = () => {
               </div>
               <div>
                 <label className="text-xs tracking-widest uppercase text-muted-foreground mb-2 block">Hora de nacimiento</label>
-                <div className="relative">
+                <div className={cn("relative", !form.birthTimeKnown && "opacity-40 pointer-events-none")}>
                   <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 z-10 pointer-events-none" />
                   <TimePicker
-                    value={form.birthTime || "00:00"}
+                    value={form.birthTime}
                     onChange={(v) => update("birthTime", v)}
                     className="w-full pl-11 text-foreground"
                   />
                 </div>
+                <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!form.birthTimeKnown}
+                    onChange={(event) => update("birthTimeKnown", !event.target.checked)}
+                    className="h-4 w-4 rounded border-border accent-primary"
+                  />
+                  No conozco mi hora exacta
+                </label>
               </div>
             </div>
 
             <div>
               <label className="text-xs tracking-widest uppercase text-muted-foreground mb-2 block">Lugar de nacimiento</label>
-              <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                <input type="text" value={form.birthPlace} onChange={(e) => update("birthPlace", e.target.value)} placeholder="Ciudad, País" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-background/50 border border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm" />
-              </div>
+              <BirthPlaceSearch
+                value={form.birthPlace}
+                onInputChange={(birthPlace) =>
+                  setForm((current) => ({
+                    ...current,
+                    birthPlace,
+                    birthLatitude: "",
+                    birthLongitude: "",
+                    birthTimezone: "",
+                  }))
+                }
+                onSelect={(place) =>
+                  setForm((current) => ({
+                    ...current,
+                    birthPlace: place.label,
+                    birthLatitude: String(place.latitude),
+                    birthLongitude: String(place.longitude),
+                    birthTimezone: place.timezone,
+                  }))
+                }
+              />
+              <p className="mt-2 text-xs text-muted-foreground/80">
+                Selecciona una opción de la lista para calcular correctamente tu carta.
+              </p>
             </div>
 
             <motion.button type="submit" disabled={loading} whileHover={{ scale: loading ? 1 : 1.01 }} whileTap={{ scale: loading ? 1 : 0.99 }} className="w-full py-3.5 rounded-xl shimmer-gold text-primary-foreground font-medium tracking-wide text-sm hover:opacity-90 transition-opacity glow-gold disabled:opacity-70 disabled:cursor-not-allowed mt-2">

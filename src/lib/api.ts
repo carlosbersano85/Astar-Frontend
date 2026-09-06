@@ -69,7 +69,11 @@ export async function apiRegister(data: {
   password: string;
   birthDate: string;
   birthPlace: string;
-  birthTime: string;
+  birthTime?: string;
+  birthLatitude: string;
+  birthLongitude: string;
+  birthTimezone: string;
+  birthTimeKnown: boolean;
 }): Promise<{ user: ApiUser; access_token: string }> {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
