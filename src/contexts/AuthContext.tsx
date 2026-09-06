@@ -28,7 +28,11 @@ interface AuthContextType {
     password: string;
     birthDate: string;
     birthPlace: string;
-    birthTime: string;
+    birthTime?: string;
+    birthLatitude: string;
+    birthLongitude: string;
+    birthTimezone: string;
+    birthTimeKnown: boolean;
   }) => Promise<{ ok: true } | { ok: false; error: string }>;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -105,7 +109,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     password: string;
     birthDate: string;
     birthPlace: string;
-    birthTime: string;
+    birthTime?: string;
+    birthLatitude: string;
+    birthLongitude: string;
+    birthTimezone: string;
+    birthTimeKnown: boolean;
   }): Promise<{ ok: true } | { ok: false; error: string }> => {
     try {
       const { user: apiUser, access_token } = await apiRegister(data);
