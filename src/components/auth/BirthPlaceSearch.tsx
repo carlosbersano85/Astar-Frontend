@@ -32,21 +32,26 @@ export default function BirthPlaceSearch({ value, onInputChange, onSelect }: Pro
   const [results, setResults] = useState<OpenMeteoPlace[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState(false);
+  const selectedLabel = useRef<string | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => setQuery(value), [value]);
 
   useEffect(() => {
+    const currentRequest = ++requestId.current;
     const normalized = query.trim();
-    if (normalized.length < 3 || normalized === value) {
+    setResults([]);
+    setError(false);
+    if (normalized.length < 3 || query === selectedLabel.current) {
       setResults([]);
       setLoading(false);
       return;
     }
 
+    const controller = new AbortController();
+    setLoading(true);
     const timeout = window.setTimeout(async () => {
-      const currentRequest = ++requestId.current;
-      setLoading(true);
       try {
         const params = new URLSearchParams({
           name: normalized,
@@ -55,7 +60,8 @@ export default function BirthPlaceSearch({ value, onInputChange, onSelect }: Pro
           format: "json",
         });
         const response = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`
+          `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`,
+          { signal: controller.signal }
         );
         if (!response.ok) throw new Error("No se pudo buscar la ciudad");
         const body = (await response.json()) as { results?: OpenMeteoPlace[] };
@@ -64,14 +70,21 @@ export default function BirthPlaceSearch({ value, onInputChange, onSelect }: Pro
           setOpen(true);
         }
       } catch {
-        if (currentRequest === requestId.current) setResults([]);
+        if (currentRequest === requestId.current && !controller.signal.aborted) {
+          setResults([]);
+          setError(true);
+        }
       } finally {
         if (currentRequest === requestId.current) setLoading(false);
       }
     }, 350);
 
-    return () => window.clearTimeout(timeout);
-  }, [query, value]);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+      ++requestId.current;
+    };
+  }, [query]);
 
   return (
     <div className="relative">
@@ -80,6 +93,7 @@ export default function BirthPlaceSearch({ value, onInputChange, onSelect }: Pro
         type="text"
         value={query}
         onChange={(event) => {
+          selectedLabel.current = null;
           setQuery(event.target.value);
           onInputChange(event.target.value);
           setOpen(true);
@@ -104,6 +118,7 @@ export default function BirthPlaceSearch({ value, onInputChange, onSelect }: Pro
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   const label = placeLabel(place);
+                  selectedLabel.current = label;
                   setQuery(label);
                   setOpen(false);
                   onSelect({
@@ -123,7 +138,9 @@ export default function BirthPlaceSearch({ value, onInputChange, onSelect }: Pro
             ))
           ) : (
             <p className="px-4 py-3 text-sm text-muted-foreground">
-              No encontramos esa ciudad. Prueba agregando el país.
+              {error
+                ? "No pudimos conectar con el buscador. Inténtalo de nuevo."
+                : "No encontramos esa ciudad. Revisa el nombre e inténtalo de nuevo."}
             </p>
           )}
         </div>
