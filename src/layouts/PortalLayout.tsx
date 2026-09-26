@@ -2,7 +2,7 @@ import { Outlet, Navigate, NavLink, Link, useNavigate, useLocation } from "react
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortalNotifications } from "@/contexts/PortalNotificationsContext";
 import { PortalNotificationsProvider } from "@/contexts/PortalNotificationsContext";
-import { LayoutDashboard, FileText, MessageCircle, HelpCircle, ShoppingCart, CreditCard, LogOut, Menu, Bell, User } from "lucide-react";
+import { LayoutDashboard, CalendarRange, FileText, MessageCircle, HelpCircle, ShoppingCart, CreditCard, LogOut, Menu, Bell, User } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import ThemeToggle from "@/components/landing/ThemeToggle";
@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 const navItems = [
   { to: "/portal", icon: LayoutDashboard, label: "Panel", end: true },
+  { to: "/portal/moments", icon: CalendarRange, label: "Próximos momentos" },
   { to: "/portal/reports", icon: FileText, label: "Reportes" },
   { to: "/portal/messages", icon: MessageCircle, label: "Mensajes" },
   { to: "/portal/questions", icon: HelpCircle, label: "Preguntas" },
@@ -19,6 +20,7 @@ const navItems = [
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/portal": { title: "Mi Panel", subtitle: "Resumen de tu actividad y reportes" },
+  "/portal/moments": { title: "Próximos momentos", subtitle: "Tus períodos relevantes en una línea de tiempo personal" },
   "/portal/reports": { title: "Mis Reportes", subtitle: "Consulta tus reportes astrológicos" },
   "/portal/reports/birth-chart": { title: "Carta Natal", subtitle: "Tu mapa astral de nacimiento" },
   "/portal/reports/solar-return": { title: "Revolución Solar", subtitle: "Tu pronóstico anual" },
@@ -148,12 +150,10 @@ const PortalLayoutContent = () => {
     <div className="min-h-screen bg-gradient-dark flex">
       <div className="fixed inset-0 bg-noise pointer-events-none z-0" />
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside className={`fixed top-0 left-0 h-full w-64 bg-card/80 backdrop-blur-xl border-r border-border/50 z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
         <div className="h-[73px] flex flex-col justify-center px-6 border-b border-border/30">
           <Link to="/" className="inline-block hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded">
@@ -183,9 +183,7 @@ const PortalLayoutContent = () => {
         </nav>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 lg:ml-64 relative z-10">
-        {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-xl border-b border-border/30">
           <button onClick={() => setSidebarOpen(true)} className="p-2 text-muted-foreground hover:text-foreground">
             <Menu className="w-5 h-5" />
@@ -199,7 +197,6 @@ const PortalLayoutContent = () => {
           </div>
         </header>
 
-        {/* Desktop header with dynamic title */}
         <header className="hidden lg:flex sticky top-0 z-30 items-center justify-between h-[73px] px-10 bg-background/60 backdrop-blur-xl border-b border-border/20">
           <div>
             <h1 className="font-serif text-lg text-foreground font-semibold leading-tight">{meta.title}</h1>
