@@ -3,19 +3,10 @@ import { motion } from "framer-motion";
 import { CalendarDays, ChevronRight, Crosshair, Loader2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { portalGetReportByType } from "@/lib/api";
+import { astroGetImportantMoments, type ImportantMoment } from "@/lib/importantMomentsApi";
 import EmptyState from "@/components/EmptyState";
 
-type MomentItem = {
-  id: string;
-  title: string;
-  theme?: string;
-  startDate?: string;
-  endDate?: string;
-  intensity?: number;
-  summary: string;
-  details?: string;
-  focus?: string;
-};
+type MomentItem = ImportantMoment;
 
 function parseDate(value?: string) {
   if (!value) return null;
@@ -75,20 +66,36 @@ function normaliseMoments(content: string | null | undefined, fallbackTitle: str
 }
 
 export default function ImportantMoments() {
-  const [report, setReport] = useState<{ title: string; content: string | null } | null>(null);
+  const [moments, setMoments] = useState<MomentItem[]>([]);
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [months, setMonths] = useState<3 | 6 | 12>(3);
 
   useEffect(() => {
-    portalGetReportByType("transits")
-      .then((result) => setReport(result ?? null))
-      .finally(() => setLoading(false));
+    Promise.allSettled([
+      astroGetImportantMoments(12),
+      portalGetReportByType("transits"),
+    ]).then(([automaticResult, reportResult]) => {
+      if (
+        automaticResult.status === "fulfilled" &&
+        Array.isArray(automaticResult.value?.moments)
+      ) {
+        setMoments(automaticResult.value.moments);
+        setGeneratedAt(automaticResult.value.generatedAt ?? null);
+      } else if (
+        reportResult.status === "fulfilled" &&
+        reportResult.value
+      ) {
+        setMoments(
+          normaliseMoments(
+            reportResult.value.content,
+            reportResult.value.title ?? "Tus próximos momentos",
+          ),
+        );
+      }
+      setLoading(false);
+    });
   }, []);
-
-  const moments = useMemo(
-    () => normaliseMoments(report?.content, report?.title ?? "Tus próximos momentos"),
-    [report]
-  );
 
   const visibleMoments = useMemo(() => {
     const now = new Date();
@@ -116,12 +123,12 @@ export default function ImportantMoments() {
     );
   }
 
-  if (!report) {
+  if (moments.length === 0) {
     return (
       <div className="mx-auto max-w-6xl">
         <EmptyState icon={CalendarDays} message="Tus próximos momentos todavía no están disponibles." />
         <p className="mx-auto mt-4 max-w-xl text-center text-sm leading-relaxed text-muted-foreground">
-          Cuando Astar tenga preparado tu panorama de tránsitos, aquí aparecerán los períodos que merecen especial atención.
+          Astar necesita una carta natal completa para calcular esta línea de tiempo. Si tus datos ya están cargados, vuelve a intentarlo más adelante.
         </p>
       </div>
     );
@@ -146,6 +153,11 @@ export default function ImportantMoments() {
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
               Astar reúne tus períodos relevantes y los presenta como momentos comprensibles: qué se activa, cuándo y dónde verlo en tu carta.
             </p>
+            {generatedAt && (
+              <p className="mt-3 text-[11px] text-muted-foreground/70">
+                Calculado a partir de tus tránsitos personales · actualización periódica
+              </p>
+            )}
           </div>
 
           <div className="inline-flex rounded-xl border border-border/40 bg-background/40 p-1">
