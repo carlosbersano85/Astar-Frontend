@@ -49,7 +49,9 @@ const PLANET_DEFS = [
   { key: "neptune", label: "Neptuno", symbol: "♆", aliases: ["neptune", "neptuno"] },
   { key: "pluto", label: "Plutón", symbol: "♇", aliases: ["pluto", "plutón", "pluton"] },
   { key: "chiron", label: "Quirón", symbol: "⚷", aliases: ["chiron", "quirón", "quiron"] },
-  { key: "north_node", label: "Nodo Norte", symbol: "☊", aliases: ["north node", "north_node", "nodo norte"] },
+  { key: "north_node", label: "Nodo Norte", symbol: "☊", aliases: ["north node", "north_node", "true_north_lunar_node", "nodo norte"] },
+  { key: "ascendant", label: "Ascendente", symbol: "ASC", aliases: ["ascendant", "ascendente", "asc", "first_house"] },
+  { key: "medium_coeli", label: "Medio Cielo", symbol: "MC", aliases: ["medium_coeli", "medium coeli", "midheaven", "medio cielo", "mc", "tenth_house"] },
 ];
 
 function normalizeText(value: unknown): string {
@@ -72,23 +74,34 @@ function signIndex(sign: unknown): number | undefined {
   const normalized = normalizeText(sign);
   const aliases: Record<string, string> = {
     aries: "aries",
+    ari: "aries",
     taurus: "taurus",
+    tau: "taurus",
     tauro: "taurus",
     gemini: "gemini",
+    gem: "gemini",
     geminis: "gemini",
     cancer: "cancer",
+    can: "cancer",
     leo: "leo",
     virgo: "virgo",
+    vir: "virgo",
     libra: "libra",
+    lib: "libra",
     scorpio: "scorpio",
+    sco: "scorpio",
     escorpio: "scorpio",
     sagittarius: "sagittarius",
+    sag: "sagittarius",
     sagitario: "sagittarius",
     capricorn: "capricorn",
+    cap: "capricorn",
     capricornio: "capricorn",
     aquarius: "aquarius",
+    aqu: "aquarius",
     acuario: "aquarius",
     pisces: "pisces",
+    pis: "pisces",
     piscis: "pisces",
   };
   const key = aliases[normalized];
@@ -103,6 +116,9 @@ function candidateForPlanet(source: any, aliases: string[]): any {
     source?.planets,
     source?.subject,
     source?.subject?.planets,
+    source?.chart_data,
+    source?.chart_data?.subject,
+    source?.chart_data?.subject?.planets,
     source?.chart,
     source?.chart?.planets,
   ].filter(Boolean);
@@ -132,6 +148,34 @@ function candidateForPlanet(source: any, aliases: string[]): any {
   }
 
   return undefined;
+}
+
+function houseNumber(value: unknown): number | undefined {
+  const direct = numeric(value);
+  if (direct != null) return Math.round(direct);
+
+  const normalized = normalizeText(value).replace(/_/g, " ");
+  const names: Record<string, number> = {
+    "first house": 1,
+    "second house": 2,
+    "third house": 3,
+    "fourth house": 4,
+    "fifth house": 5,
+    "sixth house": 6,
+    "seventh house": 7,
+    "eighth house": 8,
+    "ninth house": 9,
+    "tenth house": 10,
+    "eleventh house": 11,
+    "twelfth house": 12,
+  };
+
+  return names[normalized];
+}
+
+function signDisplay(sign: unknown): string | undefined {
+  const index = signIndex(sign);
+  return index == null ? (typeof sign === "string" ? sign : undefined) : SIGNS[index].label;
 }
 
 function normalizePlanetPoints(rawData: any): PlanetPoint[] {
@@ -168,9 +212,9 @@ function normalizePlanetPoints(rawData: any): PlanetPoint[] {
     if (longitude == null || !Number.isFinite(longitude)) return [];
 
     const house =
-      numeric(candidate?.house) ??
-      numeric(candidate?.house_number) ??
-      numeric(candidate?.house_num);
+      houseNumber(candidate?.house) ??
+      houseNumber(candidate?.house_number) ??
+      houseNumber(candidate?.house_num);
 
     const degree = index != null ? ((longitude % 30) + 30) % 30 : rawDegree;
 
@@ -178,9 +222,9 @@ function normalizePlanetPoints(rawData: any): PlanetPoint[] {
       key: def.key,
       label: def.label,
       symbol: def.symbol,
-      sign: typeof sign === "string" ? sign : undefined,
+      sign: signDisplay(sign),
       degree,
-      house: house == null ? undefined : Math.round(house),
+      house,
       longitude: ((longitude % 360) + 360) % 360,
     }];
   });
@@ -191,6 +235,7 @@ function normalizeAspects(rawData: any): AspectLine[] {
   const raw =
     source?.aspects ??
     source?.subject?.aspects ??
+    source?.chart_data?.aspects ??
     source?.chart?.aspects ??
     [];
 
