@@ -17,6 +17,11 @@ type AspectLine = {
   type?: string;
 };
 
+type HouseCusp = {
+  number: number;
+  longitude: number;
+};
+
 interface InteractiveNatalChartProps {
   data: any;
   focusText?: string;
@@ -35,6 +40,21 @@ const SIGNS = [
   { key: "capricorn", label: "Capricornio", symbol: "♑" },
   { key: "aquarius", label: "Acuario", symbol: "♒" },
   { key: "pisces", label: "Piscis", symbol: "♓" },
+];
+
+const HOUSE_KEYS = [
+  "first_house",
+  "second_house",
+  "third_house",
+  "fourth_house",
+  "fifth_house",
+  "sixth_house",
+  "seventh_house",
+  "eighth_house",
+  "ninth_house",
+  "tenth_house",
+  "eleventh_house",
+  "twelfth_house",
 ];
 
 const PLANET_DEFS = [
@@ -230,6 +250,47 @@ function normalizePlanetPoints(rawData: any): PlanetPoint[] {
   });
 }
 
+function normalizeHouseCusps(rawData: any): HouseCusp[] {
+  const source = rawData?.data ?? rawData;
+  const subject =
+    source?.subject ??
+    source?.chart_data?.subject ??
+    source?.chart?.subject ??
+    source;
+
+  const direct = HOUSE_KEYS.flatMap((key, index) => {
+    const cusp = subject?.[key];
+    const longitude =
+      numeric(cusp?.abs_pos) ??
+      numeric(cusp?.absolute_position) ??
+      numeric(cusp?.longitude);
+
+    return longitude == null
+      ? []
+      : [{ number: index + 1, longitude: ((longitude % 360) + 360) % 360 }];
+  });
+
+  if (direct.length === 12) return direct;
+
+  if (Array.isArray(subject?.houses)) {
+    return subject.houses.flatMap((house: any, index: number) => {
+      const longitude =
+        numeric(house?.abs_pos) ??
+        numeric(house?.absolute_position) ??
+        numeric(house?.longitude) ??
+        numeric(house?.degree);
+      return longitude == null
+        ? []
+        : [{
+            number: Number(house?.number ?? house?.house ?? index + 1),
+            longitude: ((longitude % 360) + 360) % 360,
+          }];
+    });
+  }
+
+  return direct;
+}
+
 function normalizeAspects(rawData: any): AspectLine[] {
   const source = rawData?.data ?? rawData;
   const raw =
@@ -274,6 +335,36 @@ function pointOnCircle(longitude: number, radius: number) {
   };
 }
 
+function midpointLongitude(start: number, end: number) {
+  const adjustedEnd = end <= start ? end + 360 : end;
+  return ((start + (adjustedEnd - start) / 2) % 360 + 360) % 360;
+}
+
+function donutSectorPath(start: number, end: number, innerRadius: number, outerRadius: number) {
+  const adjustedEnd = end <= start ? end + 360 : end;
+  const delta = adjustedEnd - start;
+  const largeArc = delta > 180 ? 1 : 0;
+  const outerStart = pointOnCircle(start, outerRadius);
+  const outerEnd = pointOnCircle(adjustedEnd, outerRadius);
+  const innerEnd = pointOnCircle(adjustedEnd, innerRadius);
+  const innerStart = pointOnCircle(start, innerRadius);
+
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerEnd.x} ${innerEnd.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function activeHouseFromText(text: string): number | null {
+  const match = normalizeText(text).match(/(?:casa|house)\s*(\d{1,2})/);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return value >= 1 && value <= 12 ? value : null;
+}
+
 function focusFromText(text: string, planets: PlanetPoint[]) {
   const normalized = normalizeText(text);
   const keys = new Set<string>();
@@ -298,8 +389,10 @@ function focusFromText(text: string, planets: PlanetPoint[]) {
 export default function InteractiveNatalChart({ data, focusText = "" }: InteractiveNatalChartProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const planets = useMemo(() => normalizePlanetPoints(data), [data]);
+  const houses = useMemo(() => normalizeHouseCusps(data), [data]);
   const aspects = useMemo(() => normalizeAspects(data), [data]);
   const textFocus = useMemo(() => focusFromText(focusText, planets), [focusText, planets]);
+  const activeHouse = useMemo(() => activeHouseFromText(focusText), [focusText]);
 
   const activeKeys = useMemo(() => {
     const keys = new Set(textFocus);
@@ -323,14 +416,61 @@ export default function InteractiveNatalChart({ data, focusText = "" }: Interact
             const angle = ((index * 30 - 90) * Math.PI) / 180;
             return (
               <line
-                key={index}
-                x1={Math.cos(angle) * 82}
-                y1={Math.sin(angle) * 82}
+                key={`zodiac-${index}`}
+                x1={Math.cos(angle) * 128}
+                y1={Math.sin(angle) * 128}
                 x2={Math.cos(angle) * 158}
                 y2={Math.sin(angle) * 158}
-                className="stroke-border/45"
-                strokeWidth="0.8"
+                className="stroke-border/30"
+                strokeWidth="0.7"
               />
+            );
+          })}
+
+          {activeHouse && houses.length === 12 && (() => {
+            const index = activeHouse - 1;
+            const current = houses[index];
+            const next = houses[(index + 1) % 12];
+            if (!current || !next) return null;
+            return (
+              <path
+                d={donutSectorPath(current.longitude, next.longitude, 82, 127)}
+                className="fill-primary/10 stroke-primary/25"
+                strokeWidth="0.7"
+              />
+            );
+          })()}
+
+          {houses.map((house) => {
+            const cuspPoint = pointOnCircle(house.longitude, 158);
+            const innerPoint = pointOnCircle(house.longitude, 82);
+            const next = houses[house.number % houses.length];
+            const labelLongitude = next
+              ? midpointLongitude(house.longitude, next.longitude)
+              : house.longitude;
+            const labelPoint = pointOnCircle(labelLongitude, 69);
+            const highlighted = activeHouse === house.number;
+
+            return (
+              <g key={`house-${house.number}`}>
+                <line
+                  x1={innerPoint.x}
+                  y1={innerPoint.y}
+                  x2={cuspPoint.x}
+                  y2={cuspPoint.y}
+                  className={highlighted ? "stroke-primary/80" : "stroke-primary/25"}
+                  strokeWidth={highlighted ? 1.6 : 0.8}
+                />
+                <text
+                  x={labelPoint.x}
+                  y={labelPoint.y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className={highlighted ? "fill-primary text-[8px]" : "fill-muted-foreground/65 text-[8px]"}
+                >
+                  {house.number}
+                </text>
+              </g>
             );
           })}
 
