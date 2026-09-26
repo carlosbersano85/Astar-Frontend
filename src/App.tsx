@@ -33,6 +33,7 @@ const Register = lazy(() => import("@/pages/Register"));
 const PortalDashboard = lazy(() => import("@/pages/portal/Dashboard"));
 const PortalReports = lazy(() => import("@/pages/portal/Reports"));
 const BirthChart = lazy(() => import("@/pages/portal/BirthChart"));
+const ImportantMoments = lazy(() => import("@/pages/portal/ImportantMoments"));
 const SolarReturn = lazy(() => import("@/pages/portal/SolarReturn"));
 const Numerology = lazy(() => import("@/pages/portal/Numerology"));
 const Messages = lazy(() => import("@/pages/portal/Messages"));
@@ -95,6 +96,7 @@ const App = () => (
                 {/* Client Portal */}
                 <Route path="/portal" element={<PortalLayout />}>
                   <Route index element={<PortalDashboard />} />
+                  <Route path="moments" element={<ImportantMoments />} />
                   <Route path="reports" element={<PortalReports />} />
                   <Route path="reports/birth-chart" element={<BirthChart />} />
                   <Route path="reports/solar-return" element={<SolarReturn />} />
